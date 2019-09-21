@@ -1,0 +1,69 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '1.3.50'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '5.1.0'
+}
+
+version '1.0'
+
+sourceCompatibility = 1.8
+
+application {
+    mainClassName = 'policymig.PolicyMig'
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    // Standard Kotlin dependency for JDK8
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+
+    // CLI application dependency
+    implementation 'com.github.ajalt:clikt:2.1.0'
+
+    // Logging APIs
+    implementation 'org.slf4j:slf4j-api:1.7.28'
+    implementation 'org.slf4j:slf4j-simple:1.7.28'
+
+    // Exposed persistence layer
+    implementation 'org.jetbrains.exposed:exposed:0.16.1'
+    // MySQL JDBC driver
+    implementation 'mysql:mysql-connector-java:8.0.17'
+
+    // Google Cloud APIs
+    implementation 'com.google.apis:google-api-services-compute:v1-rev214-1.25.0'
+
+    // AWS cloud APIs
+    implementation platform('software.amazon.awssdk:bom:2.5.29')
+    implementation 'software.amazon.awssdk:ec2'
+
+    // MongoDB client
+    implementation 'org.litote.kmongo:kmongo:3.11.0'
+
+    // Testing environment with JUnit 5
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.1'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.5.1'
+}
+
+test {
+    useJUnitPlatform()
+    maxParallelForks = Runtime.getRuntime().availableProcessors()
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = '1.8'
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = '1.8'
+}
+
+shadowJar {
+    baseName = 'cloud-mig'
+    classifier = null
+    version = ""
+    minimize()
+}

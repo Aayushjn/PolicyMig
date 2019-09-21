@@ -1,0 +1,50 @@
+policy {
+	name = test-policy
+	description = Testing policy
+	target = gcp
+	network = default
+	rules {
+		rule {
+			direction = INGRESS
+			ports = [8080, 5500-5600]
+			action = allow
+			protocol = sctp
+			sourceTags = {app=jarviss, role=test}
+			targetTags = {app=jarviss, role=db, env=mysql}
+		}
+		rule {
+			direction = EGRESS
+			ports = [8080, 5500-5600]
+			action = deny
+			protocol = udp
+			sourceIps = [192.22.53.102]
+			targetIps = [192.24.58.144, 198.22.3.5]
+		}
+	}
+}
+
+policy {
+	name = test-policy
+	description = Testing policy
+	target = aws
+	regions = [us-west-2, eu-central-1]
+	rules {
+		rule {
+			direction = INGRESS
+			ports = [8080, 5500-5600]
+			action = allow
+			protocol = sctp
+			sourceTags = {app=jarviss, role=test}
+			targetTags = {app=jarviss, role=db, env=mysql}
+		}
+		rule {
+			direction = EGRESS
+			ports = [8080, 5500-5600]
+			action = deny
+			protocol = udp
+			sourceIps = [192.22.53.102]
+			targetIps = [192.24.58.144, 198.22.3.5]
+		}
+	}
+}
+

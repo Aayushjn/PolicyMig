@@ -41,9 +41,6 @@ dependencies {
     implementation platform('software.amazon.awssdk:bom:2.5.29')
     implementation 'software.amazon.awssdk:ec2'
 
-    // MongoDB client
-    implementation 'org.litote.kmongo:kmongo:3.11.0'
-
     // Testing environment with JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.1'
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.5.1'

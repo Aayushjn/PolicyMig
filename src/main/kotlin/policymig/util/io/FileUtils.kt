@@ -74,8 +74,8 @@ fun readFromPcl(filename: String): MutableList<Policy> {
         network = null
         direction = ""
         ports = emptyList()
-        action = "allow"
-        protocol = "tcp"
+        action = ""
+        protocol = ""
         sourceIps = null
         sourceTags = null
         targetIps = null
@@ -87,20 +87,31 @@ fun readFromPcl(filename: String): MutableList<Policy> {
                 "description" -> description = property[1].trim()
                 "target" -> target = property[1].trim()
                 "network" -> network = property[1].trim()
-                "regions" -> region = property[1].trim()
+                "region" -> region = property[1].trim()
                 "direction" -> direction = property[1].trim().toUpperCase()
-                "ports" -> ports = property[1].trim().split(",").map {
-                    // Removes [] from the input
-                    it.trim().replace("[\\[\\]]".toRegex(), "")
+                "ports" -> {
+                    ports = property[1].trim().split(",").map {
+                        // Removes [] from the input
+                        it.trim().replace("[\\[\\]]".toRegex(), "")
+                    }
+                    println("Ports: $protocol, $action, $ports")
                 }
-                "action" -> action = property[1].trim()
-                "protocol" -> protocol = property[1].trim()
+                "action" -> {
+                    action = property[1].trim()
+                    println("Action: $protocol, $action, $ports")
+                }
+                "protocol" -> {
+                    protocol = property[1].trim()
+                    println("Protocol: $protocol, $action, $ports")
+                }
                 "sourceIps" -> {
                     sourceIps = property[1].trim().split(",").map {
                         // Removes [] from the input
                         it.trim().replace("[\\[\\]]".toRegex(), "")
                     }
                     sourceTags = null
+                    targetIps = null
+                    targetTags = null
                 }
                 "sourceTags" -> {
                     // Creates a map of all "key=value" elements
@@ -112,20 +123,17 @@ fun readFromPcl(filename: String): MutableList<Policy> {
                         left to right
                     }
                     sourceIps = null
+                    targetIps = null
+                    targetTags = null
                 }
                 "targetIps" -> {
                     targetIps = property[1].trim().split(",").map {
                         // Removes [] from the input
                         it.trim().replace("[\\[\\]]".toRegex(), "")
                     }
+                    sourceIps = null
+                    sourceTags = null
                     targetTags = null
-                    rules.add(
-                        Rule(
-                            ports,
-                            action,
-                            protocol
-                        )
-                    )
                 }
                 "targetTags" -> {
                     // Creates a map of all "key=value" elements
@@ -136,17 +144,22 @@ fun readFromPcl(filename: String): MutableList<Policy> {
                         }
                         left to right
                     }
+                    sourceIps = null
+                    sourceTags = null
                     targetIps = null
-                    rules.add(
-                        Rule(
-                            ports,
-                            action,
-                            protocol
-                        )
-                    )
                 }
             }
+            if (ports.isNotEmpty() && action != "" && protocol != "") {
+                rules.add(
+                    Rule(
+                        ports,
+                        action,
+                        protocol
+                    )
+                )
+            }
         }
+
         policies.add(Policy(name, description, target, direction, network, region, sourceIps, sourceTags, targetIps, targetTags, rules.toList()))
     }
 

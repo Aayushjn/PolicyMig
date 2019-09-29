@@ -26,7 +26,7 @@ object InstanceTable: Table("instances") {
  * @property instanceId foreign key to [policymig.db.InstanceTable.instanceId]
  */
 object PrivateIpTable: Table("private_ips") {
-    val ip: Column<String> = varchar("ip", 19).primaryKey().check("IP") { it.regexp(IP_REGEX) }
+    val ip: Column<String> = varchar("ip", 19).primaryKey().check("IP") { it.regexp(IP_REGEX.toString()) }
     val instanceId: Column<String> = reference("instance_id", InstanceTable.instanceId, onDelete = CASCADE)
 }
 
@@ -37,7 +37,7 @@ object PrivateIpTable: Table("private_ips") {
  * @property instanceId foreign key to [policymig.db.InstanceTable.instanceId]
  */
 object PublicIpTable: Table("public_ips") {
-    val ip: Column<String> = varchar("ip", 19).primaryKey().check("IP") { it.regexp(IP_REGEX) }
+    val ip: Column<String> = varchar("ip", 19).primaryKey().check("IP") { it.regexp(IP_REGEX.toString()) }
     val instanceId: Column<String> = reference("instance_id", InstanceTable.instanceId, onDelete = CASCADE)
 }
 
@@ -50,6 +50,6 @@ object PublicIpTable: Table("public_ips") {
  */
 object TagsTable: Table("tags") {
     val id: Column<Int> = integer("id").autoIncrement().primaryKey()
-    val tag: Column<String> = varchar("tag", 30).check("tag") { it.regexp(TAG_REGEX) }
+    val tag: Column<String> = varchar("tag", 30).check("tag") { it.regexp(TAG_REGEX.toString()) }
     val instanceId: Column<String> = reference("instance_id", InstanceTable.instanceId, onDelete = CASCADE)
 }

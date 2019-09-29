@@ -6,7 +6,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
-const val DIRECTORY: String = "terraform-resources"
+const val DIRECTORY: String = ".terraform-resources"
 const val GCP_PROVIDER_VERSION: String = "2.15.0"
 const val AWS_PROVIDER_VERSION: String = "2.28.1"
 

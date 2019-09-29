@@ -28,7 +28,7 @@ import java.nio.file.Path
  * Disables stacktrace output to console and instead prints the error message and exception type to [System.err]
  */
 class PolicyMigrate: CliktCommand(
-    name = "cloud-policy",
+    name = "policy-mig",
     help = "CLI tool to translate and apply policies on the cloud",
     printHelpOnEmptyArgs = true
 ) {
@@ -43,7 +43,7 @@ class PolicyMigrate: CliktCommand(
  *
  * Usage:
  * ```
- * cloud-policy apply -f [file].pcl
+ * policy-mig apply -f [file].pcl
  * ```
  */
 class Apply: CliktCommand(
@@ -105,19 +105,21 @@ class Apply: CliktCommand(
                 }
             }
         }
-        val initCommand = runCommand("terraform init", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/gcp/")
+        val homePath = System.getenv("HOME")
+
+        val initCommand = runCommand("terraform init", "$homePath/terraform-resources/gcp/")
         logInfo { initCommand.first }
         if (initCommand.second != "") {
             logError { initCommand.second }
             return
         }
-        val planCommand = runCommand("terraform plan -out plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/gcp/")
+        val planCommand = runCommand("terraform plan -out plan.out", "$homePath/terraform-resources/gcp/")
         logInfo { planCommand.first }
         if (planCommand.second != "") {
             logError { planCommand.second }
             return
         }
-        val applyCommand = runCommand("terraform apply plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/gcp/", 180)
+        val applyCommand = runCommand("terraform apply plan.out", "$homePath/terraform-resources/gcp/", 180)
         logInfo { applyCommand.first }
         if (applyCommand.second != "") {
             logError { applyCommand.second }
@@ -136,8 +138,8 @@ class Apply: CliktCommand(
  *
  * Usage:
  * ```
- * cloud-policy translate -t aws -r [region] -f [file].pcl
- * cloud-policy translate -t gcp -n [network] -f [file].pcl
+ * policy-mig translate -t aws -r [region] -f [file].pcl
+ * policy-mig translate -t gcp -n [network] -f [file].pcl
  * ```
  */
 class Translate: CliktCommand(
@@ -158,7 +160,7 @@ class Translate: CliktCommand(
     private val region: String? by option("-r", "--region", help = "Regions for AWS")
     private val network: String? by option("-n", "--network", help = "Network for GCP")
         .validate {
-            if (!it.matches(NETWORK_REGEX.toRegex())) {
+            if (!(it matches NETWORK_REGEX)) {
                 fail("Network must contain only lowercase letters, hyphens and numbers!")
             }
         }
@@ -196,8 +198,8 @@ class Translate: CliktCommand(
  *
  * Usage:
  * ```
- * cloud-policy discover -t gcp -p [project] -c [file].json
- * cloud-policy discover -t aws
+ * policy-mig discover -t gcp -p [project] -c [file].json
+ * policy-mig discover -t aws
  * ```
  */
 class Discover: CliktCommand(
@@ -244,7 +246,7 @@ class Discover: CliktCommand(
  *
  * Usage:
  * ```
- * cloud-policy clean
+ * policy-mig clean
  * ```
  */
 class Clean: CliktCommand(

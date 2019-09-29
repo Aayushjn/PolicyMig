@@ -9,9 +9,10 @@ val AWS_REGIONS: Array<String> = arrayOf(
     "us-gov-west-1"
 )
 
-const val NETWORK_REGEX: String = "[a-z0-9-]+"
-const val IP_REGEX: String = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))\$"
-const val TAG_REGEX: String = "[a-z0-9A-Z.-]+=[a-z0-9A-Z.-]+"
+val NETWORK_REGEX: Regex = "[a-z0-9-]+".toRegex()
+val IP_REGEX: Regex = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))\$".toRegex()
+val PORT_REGEX: Regex = "^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])\$".toRegex()
+val TAG_REGEX: Regex = "[a-z0-9A-Z.-]+=[a-z0-9A-Z.-]+".toRegex()
 
 val DIRECTIONS: Array<String> = arrayOf("INGRESS", "EGRESS")
 val ACTIONS: Array<String> = arrayOf("allow", "deny")

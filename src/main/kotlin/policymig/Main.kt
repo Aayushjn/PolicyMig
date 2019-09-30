@@ -4,6 +4,7 @@ package policymig
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.validate
@@ -25,14 +26,14 @@ import java.nio.file.Path
 /**
  * Base CLI command
  *
- * Disables stacktrace output to console and instead prints the error message and exception type to [System.err]
+ * Disables stacktrace output to console and instead logs the error message and exception type to the console
  */
 class PolicyMigrate: CliktCommand(
     name = "policy-mig",
     help = "CLI tool to translate and apply policies on the cloud",
     printHelpOnEmptyArgs = true
 ) {
-    override fun run() = Thread.setDefaultUncaughtExceptionHandler { _, e -> logError { "${e::class.java.simpleName}: ${e.message}" } }
+        override fun run() = Thread.setDefaultUncaughtExceptionHandler { _, e -> logError { "${e::class.java.simpleName}: ${e.message}" } }
 }
 
 /**
@@ -105,21 +106,20 @@ class Apply: CliktCommand(
                 }
             }
         }
-        val homePath = System.getenv("HOME")
 
-        val initCommand = runCommand("terraform init", "$homePath/terraform-resources/gcp/")
+        val initCommand = runCommand("terraform init", "$DIRECTORY/gcp/")
         logInfo { initCommand.first }
         if (initCommand.second != "") {
             logError { initCommand.second }
             return
         }
-        val planCommand = runCommand("terraform plan -out plan.out", "$homePath/terraform-resources/gcp/")
+        val planCommand = runCommand("terraform plan -out plan.out", "$DIRECTORY/gcp/")
         logInfo { planCommand.first }
         if (planCommand.second != "") {
             logError { planCommand.second }
             return
         }
-        val applyCommand = runCommand("terraform apply plan.out", "$homePath/terraform-resources/gcp/", 180)
+        val applyCommand = runCommand("terraform apply plan.out", "$DIRECTORY/gcp/", 180)
         logInfo { applyCommand.first }
         if (applyCommand.second != "") {
             logError { applyCommand.second }
@@ -247,14 +247,33 @@ class Discover: CliktCommand(
  * Usage:
  * ```
  * policy-mig clean
+ * policy-mig clean -d
  * ```
  */
 class Clean: CliktCommand(
     help = "Frees all resources used by this tool (Databases, File System, etc)"
 ) {
+    private val destroy: Boolean by option("-d", "--destroy", help = "Destroy all resources created via Terraform")
+        .flag(default = false)
+
     override fun run() {
         DbUtils.emptyTables()
         logInfo { "All tables dropped!" }
+
+        if (destroy) {
+            var destroyCommand: Pair<String, String>
+            File(DIRECTORY).listFiles { pathname -> pathname.isDirectory }?.forEach { file ->
+                logInfo { file }
+                file.listFiles { pathname -> pathname.isDirectory }?.forEach { dir ->
+                    destroyCommand = runCommand("terraform destroy -auto-approve", workingDirectory = dir.toString(), timeout = 180)
+                    logInfo { destroyCommand.first.trim() }
+                    if (destroyCommand.second != "") {
+                        logError { destroyCommand.second }
+                        return
+                    }
+                }
+            }
+        }
 
         File(DIRECTORY).deleteRecursively()
         logInfo { "All Terraform resources deleted!" }
@@ -266,12 +285,11 @@ fun main(args: Array<String>) = PolicyMigrate()
     .main(args)
 
 //fun main() {
-//    createGcpProviderBlock("pelagic-cycle-239905", "/home/aayush/IdeaProjects/PolicyMig/gcp_auth.json")
 //    val policy = policy {
 //        name = "test-policy"
 //        description = "Testing policy"
-//        target = "gcp"
-//        network = "default"
+//        target = "aws"
+//        region = "us-west-2"
 //        direction = "EGRESS"
 ////        sourceIps = listOf("192.168.2.0/16", "10.53.25.192/24")
 //        targetIps = listOf("0.0.0.0/0")
@@ -279,19 +297,19 @@ fun main(args: Array<String>) = PolicyMigrate()
 //            rule {
 //                ports = listOf("8080", "5500-5600")
 //                action = "allow"
-//                protocol = "sctp"
+//                protocol = "tcp"
 //            }
 //            rule {
-//                ports = listOf("8080", "5500-5600")
-//                action = "deny"
-//                protocol = "udp"
+//                ports = listOf("0")
+//                action = "allow"
+//                protocol = "all"
 //            }
 //        }
 //    }
 //    println(policy)
-//    createGcpFirewallBlock(policy)
+//    createAwsSecurityGroupBlock(policy)
 //
-//    println(runCommand("terraform init", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/gcp/"))
-//    println(runCommand("terraform plan -out plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/gcp/"))
-//    println(runCommand("terraform apply plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/gcp/", 180))
+//    println(runCommand("terraform init", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/"))
+//    println(runCommand("terraform plan -out plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/"))
+//    println(runCommand("terraform apply plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/", 180))
 //}

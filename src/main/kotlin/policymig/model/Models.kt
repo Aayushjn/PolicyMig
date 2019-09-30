@@ -65,6 +65,10 @@ data class Policy(val name: String,
                 requireNotNull(region) { "Regions must be specified!" }
                 rules.forEach { rule ->
                     require(rule.protocol != "sctp" || rule.protocol != "esp" || rule.protocol != "ah") { "${rule.protocol} is not a valid protocol for AWS!" }
+                    require(rule.action == "allow") { "All AWS policies are meant to allow traffic!" }
+                    if (rule.protocol == "all") {
+                        require(rule.ports.size == 1 && rule.ports[0] == "0") { "Port must be 0 to use the \"all\" protocol!" }
+                    }
                 }
             }
         }
@@ -113,28 +117,16 @@ data class Policy(val name: String,
         network?.let { appendln("\tnetwork = \"$network\"") }
         region?.let { appendln("\tregion = \"$region\"") }
         sourceIps?.let {
-            append("\tsourceIps = [")
-            it.forEach { ip -> append("\"$ip\", ") }
-            delete(length - 2, length)
-            appendln("]")
+            appendln("\tsourceIps = [${it.joinToString {ip -> "\"$ip\"" }}]")
         }
         sourceTags?.let {
-            append("\tsourceTags = {")
-            it.forEach { tag -> append("\"${tag.key}=${tag.value}\", ") }
-            delete(length - 2, length)
-            appendln("}")
+            appendln("\tsourceTags = {${it.toList().joinToString { tag -> "\"${tag.first}=${tag.second}\"" }}}")
         }
         targetIps?.let {
-            append("\ttargetIps = [")
-            it.forEach { ip -> append("\"$ip\", ") }
-            delete(length - 2, length)
-            appendln("]")
+            appendln("\ttargetIps = [${it.joinToString {ip -> "\"$ip\"" }}]")
         }
         targetTags?.let {
-            append("\ttargetTags = {")
-            it.forEach { tag -> append("\"${tag.key}=${tag.value}\", ") }
-            delete(length - 2, length)
-            appendln("}")
+            appendln("\ttargetTags = {${it.toList().joinToString { tag -> "\"${tag.first}=${tag.second}\"" }}}")
         }
         appendln("\trules {")
         rules.forEach { append("\t\t$it") }
@@ -180,10 +172,7 @@ data class Rule(val ports: List<String>,
         appendln("rule {")
         appendln("\t\t\taction = \"$action\"")
         appendln("\t\t\tprotocol = \"$protocol\"")
-        append("\t\t\tports = [")
-        ports.forEach { append("\"$it\", ") }
-        delete(length - 2, length)
-        appendln("]")
+        appendln("\t\t\tports = [${ports.joinToString { port -> "\"$port\"" }}]")
         appendln("\t\t}")
     }
 }

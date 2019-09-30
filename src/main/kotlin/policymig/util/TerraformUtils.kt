@@ -6,7 +6,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
-const val DIRECTORY: String = ".terraform-resources"
+const val DIRECTORY: String = "terraform-resources"
 const val GCP_PROVIDER_VERSION: String = "2.15.0"
 const val AWS_PROVIDER_VERSION: String = "2.28.1"
 
@@ -41,7 +41,7 @@ private val DENY_TEMPLATE: MutableList<String> = mutableListOf(
 
 private val AWS_PROVIDER_BLOCK: MutableList<String> = mutableListOf(
     "provider \"aws\" {\n\tversion = \"~> ${AWS_PROVIDER_VERSION}\"\n\tregion = \"",
-    "\""
+    "\"\n}\n"
 )
 
 private val SECURITY_GROUP_BLOCK: MutableList<String> = mutableListOf(
@@ -151,83 +151,83 @@ fun createGcpFirewallBlock(policy: Policy) {
     }
 }
 
-//fun createAwsSecurityGroupBlock(policy: Policy) {
-//    require(policy.target == "aws") { "Only AWS policies allowed!" }
-//
-//    with(Paths.get(DIRECTORY + File.separator + "aws")) {
-//        if (!Files.exists(this)) {
-//            Files.createDirectory(this)
-//        }
-//
-//        with(Paths.get(this.toString() + File.separator + policy.region)) {
-//            if (!Files.exists(this)) {
-//                Files.createDirectory(this)
-//            }
-//
-//            val providerBlock = ArrayList(AWS_PROVIDER_BLOCK).apply {
-//                add(1, policy.region)
-//            }
-//
-//            with (File(this.toString(), "provider.tf")) {
-//                writeText("")
-//                providerBlock.forEach {
-//                    appendText(it.toString())
-//                }
-//            }
-//
-//            var clonedBlock: MutableList<String>
-//            policy.rules.forEachIndexed { i, rule ->
-//                clonedBlock = ArrayList(SECURITY_GROUP_BLOCK).apply {
-//                    add(0, "resource \"aws_security_group\" \"firewall-${randomHexString()}")
-//                    add(2, policy.name + i)
-//                    add(4, policy.description)
-//
-//                    val template: MutableList<String> = if (policy.direction.toUpperCase() == "INGRESS") {
-//                        ArrayList(INGRESS_BLOCK)
-//                    } else {
-//                        ArrayList(EGRESS_BLOCK)
-//                    }.apply {
-//                        add()
-//                    }
-//
-//                    if (policy.sourceIps == null) {
-//                        removeAt(10)
-//                    } else {
-//                        add(11, "[" +
-//                                policy.sourceIps.joinToString { item -> "\"$item\"" } +
-//                                "]")
-//                    }
-//                    if (policy.targetIps == null) {
-//                        removeAt(12)
-//                    } else {
-//                        add(11, "[" +
-//                                policy.targetIps.joinToString { item -> "\"$item\"" } +
-//                                "]")
-//                    }
-//
-//                    val template: MutableList<String> = if (rule.action == "allow") {
-//                        ArrayList(ALLOW_TEMPLATE)
-//                    } else {
-//                        ArrayList(DENY_TEMPLATE)
-//                    }.apply {
-//                        add(1, rule.protocol)
-//                        add(3, "[" +
-//                                rule.ports.joinToString { port -> "\"$port\"" } +
-//                                "]")
-//                    }
-//
-//                    add(size - 1, template.joinToString(""))
-//                }
-//
-//                with(File(this.toString(), "firewalls.tf")) {
-//                    clonedBlock.forEach {
-//                        appendText(it)
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
+fun createAwsSecurityGroupBlock(policy: Policy) {
+    require(policy.target == "aws") { "Only AWS policies allowed!" }
+
+    var template: MutableList<String>
+
+    with(Paths.get(DIRECTORY + File.separator + "aws")) {
+        if (!Files.exists(this)) {
+            Files.createDirectory(this)
+        }
+
+        with(Paths.get(this.toString() + File.separator + policy.region)) {
+            if (!Files.exists(this)) {
+                Files.createDirectory(this)
+            }
+
+            val providerBlock = ArrayList(AWS_PROVIDER_BLOCK).apply {
+                add(1, policy.region)
+            }
+
+            with (File(this.toString(), "provider.tf")) {
+                writeText("")
+                providerBlock.forEach {
+                    appendText(it.toString())
+                }
+            }
+
+            var clonedBlock: MutableList<String>
+            policy.rules.forEachIndexed { i, rule ->
+                clonedBlock = ArrayList(SECURITY_GROUP_BLOCK).apply {
+                    add(0, "resource \"aws_security_group\" \"firewall-${randomHexString()}")
+                    add(2, policy.name + i)
+                    add(4, policy.description)
+
+                    rule.ports.forEach { port ->
+                        template = if (policy.direction.toUpperCase() == "INGRESS") {
+                            ArrayList(INGRESS_BLOCK)
+                        } else {
+                            ArrayList(EGRESS_BLOCK)
+                        }
+                        if (port.split("-").size == 2) {
+                            template.apply {
+                                val (from, to) = port.split("-", limit = 2)
+                                add(1, from)
+                                add(3, to)
+                            }
+                        } else {
+                            template.apply {
+                                add(1, port)
+                                add(3, port)
+                            }
+                        }
+                        template.apply {
+                            if (rule.protocol == "all") {
+                                add(5, "-1")
+                            } else {
+                                add(5, rule.protocol)
+                            }
+                            policy.sourceIps?.let { ips ->
+                                add(7, "[${ips.joinToString { item -> "\"$item\"" }}]")
+                            }
+                            policy.targetIps?.let { ips ->
+                                add(7, "[${ips.joinToString { item -> "\"$item\"" }}]")
+                            }
+                        }
+                        add(size - 1, template.joinToString(""))
+                    }
+                }
+
+                with(File(this.toString(), "firewalls.tf")) {
+                    clonedBlock.forEach {
+                        appendText(it)
+                    }
+                }
+            }
+        }
+    }
+}
 
 /**
  * Runs an external shell command

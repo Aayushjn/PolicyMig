@@ -6,6 +6,7 @@ GCP cloud environments for security policy migration.
 It also defines a configuration language, termed Policy Configuration Language (.pcl), which dictates the syntax for 
 defining security policies across cloud targets.
 
+___
 ### Policy Configuration Language
 Each policy (.pcl file) has the following format:
 ```
@@ -53,4 +54,18 @@ The protocol must be one of those mentioned [here](src/main/kotlin/policymig/uti
 for GCP, while **sctp**, **esp** and **ah** are invalid for AWS.<br>
 _ports_ may be a range or a list of singular port numbers.
 
-
+___
+### Checklist
+- [x] Policy translation
+- [ ] Policy DSL
+    - [x] Write to file
+    - [ ] Read from file
+- [ ] Terraform configuration generation
+    - [x] GCP
+    - [ ] AWS
+- [x] Cloud discovery
+    - [x] GCP
+    - [x] AWS
+- [ ] Policy creation
+    - [x] GCP
+    - [ ] AWS

@@ -204,5 +204,9 @@ object DbUtils {
         return instances
     }
 
-    fun emptyTables() = SchemaUtils.drop(InstanceTable, PrivateIpTable, PublicIpTable, TagsTable)
+    fun emptyTables() {
+        logInfo("DbUtils") { "Opening connection to ${db.url} to drop all tables" }
+
+        transaction { SchemaUtils.drop(InstanceTable, PrivateIpTable, PublicIpTable, TagsTable) }
+    }
 }

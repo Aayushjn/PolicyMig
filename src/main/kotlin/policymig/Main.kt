@@ -77,31 +77,23 @@ class Apply: CliktCommand(
                 requireNotNull(project)
                 requireNotNull(credentialsFile)
                 createGcpProviderBlock(project!!, credentialsFile.toString())
-                policies.forEach { createGcpFirewallBlock(it) }
+                policies.forEach { policy -> createGcpFirewallBlock(policy) }
             } else {
-                /*
-                    TODO: Add AWS Terraform code
-                    @author: aayush
-                    @date: 20/09/19
-                    @time: 10:02 AM
-                 */
-                TODO()
+                if (project != null || credentialsFile != null) {
+                    logWarning { "Project and/or credentials file are not required for AWS" }
+                }
+
+                policies.forEach { policy -> createAwsSecurityGroupBlock(policy) }
             }
             2 -> {
                 requireNotNull(project)
                 requireNotNull(credentialsFile)
                 createGcpProviderBlock(project!!, credentialsFile.toString())
-                policies.forEach {
-                    if (it.target == "gcp") {
-                        createGcpFirewallBlock(it)
+                policies.forEach { policy ->
+                    if (policy.target == "gcp") {
+                        createGcpFirewallBlock(policy)
                     } else {
-                        /*
-                    TODO: Add AWS Terraform code
-                    @author: aayush
-                    @date: 20/09/19
-                    @time: 10:02 AM
-                 */
-                        TODO()
+                        createAwsSecurityGroupBlock(policy)
                     }
                 }
             }
@@ -257,7 +249,7 @@ class Clean: CliktCommand(
         .flag(default = false)
 
     override fun run() {
-        DbUtils.emptyTables()
+        DbUtils.dropAllTables()
         logInfo { "All tables dropped!" }
 
         if (destroy) {
@@ -285,31 +277,34 @@ fun main(args: Array<String>) = PolicyMigrate()
     .main(args)
 
 //fun main() {
-//    val policy = policy {
-//        name = "test-policy"
-//        description = "Testing policy"
-//        target = "aws"
-//        region = "us-west-2"
-//        direction = "EGRESS"
-////        sourceIps = listOf("192.168.2.0/16", "10.53.25.192/24")
-//        targetIps = listOf("0.0.0.0/0")
-//        rules {
-//            rule {
-//                ports = listOf("8080", "5500-5600")
-//                action = "allow"
-//                protocol = "tcp"
-//            }
-//            rule {
-//                ports = listOf("0")
-//                action = "allow"
-//                protocol = "all"
-//            }
-//        }
-//    }
-//    println(policy)
-//    createAwsSecurityGroupBlock(policy)
+//    selectAllAwsInstances().forEach { println(it) }
+//    fetchTagAsIp("gcp", "app" to "policy-mig").forEach { println(it) }
 //
-//    println(runCommand("terraform init", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/"))
-//    println(runCommand("terraform plan -out plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/"))
-//    println(runCommand("terraform apply plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/", 180))
+////    val policy = policy {
+////        name = "test-policy"
+////        description = "Testing policy"
+////        target = "aws"
+////        region = "us-west-2"
+////        direction = "EGRESS"
+//////        sourceIps = listOf("192.168.2.0/16", "10.53.25.192/24")
+////        targetIps = listOf("0.0.0.0/0")
+////        rules {
+////            rule {
+////                ports = listOf("8080", "5500-5600")
+////                action = "allow"
+////                protocol = "tcp"
+////            }
+////            rule {
+////                ports = listOf("0")
+////                action = "allow"
+////                protocol = "all"
+////            }
+////        }
+////    }
+////    println(policy)
+////    createAwsSecurityGroupBlock(policy)
+////
+////    println(runCommand("terraform init", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/"))
+////    println(runCommand("terraform plan -out plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/"))
+////    println(runCommand("terraform apply plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/", 180))
 //}

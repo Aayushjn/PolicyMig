@@ -14,6 +14,7 @@ data class Instance(
     val instanceId: String,
     var accountId: String,
     var region: String,
+    var target: String,
     var privateIps: List<String>,
     var publicIps: List<String>,
     var tags: Map<String, String>
@@ -38,6 +39,7 @@ class InstanceBuilder {
     var instanceId: String = ""
     var accountId: String = ""
     var region: String = ""
+    var target: String = ""
     var privateIps: List<String> = listOf()
     var publicIps: List<String> = listOf()
     var tags: Map<String, String> = mapOf()
@@ -47,7 +49,7 @@ class InstanceBuilder {
      *
      * @return [policymig.db.Instance]
      */
-    internal fun build(): Instance = Instance(instanceId, accountId, region, privateIps, publicIps, tags)
+    internal fun build(): Instance = Instance(instanceId, accountId, region, target, privateIps, publicIps, tags)
 }
 
 /**
@@ -72,18 +74,4 @@ internal fun List<Instance>.contains(instanceId: String): Boolean {
         }
     }
     return false
-}
-
-/**
- * Extension function that checks whether a string is composed of only numerals or not
- *
- * @return true if the string is only numeric
- */
-internal fun String.isNumeric(): Boolean {
-    forEach {
-        if (!it.isDigit()) {
-            return false
-        }
-    }
-    return true
 }

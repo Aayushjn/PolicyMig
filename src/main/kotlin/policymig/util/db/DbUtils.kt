@@ -35,21 +35,21 @@ object DbUtils {
             // Creates tables if they don't already exist
             SchemaUtils.create(InstanceTable, PrivateIpTable, PublicIpTable, TagsTable)
 
-            // If DB contains entries that don't exist on the cloud, they must be deleted
-            val toDelete: MutableList<String> = mutableListOf()
-            InstanceTable.slice(InstanceTable.instanceId).selectAll().toList().forEach {
-                if (!instances.contains(it[InstanceTable.instanceId])) {
-                    toDelete.add(it[InstanceTable.instanceId])
-                }
-            }
+            /*
+                TODO: Add deletion support for instances that don't exist on cloud
+                @author: aayush
+                @date: 30/09/19
+                @time: 6:47 PM
+             */
 
             instances.forEach { instance ->
                 // Insert into DB if not already exists
-                if (InstanceTable.select { InstanceTable.instanceId eq instance.instanceId }.toList().isEmpty()) {
+                if (InstanceTable.select { (InstanceTable.instanceId eq instance.instanceId) and (InstanceTable.target eq instance.target) }.toList().isEmpty()) {
                     InstanceTable.insert {
                         it[instanceId] = instance.instanceId
                         it[accountId] = instance.accountId
                         it[region] = instance.region
+                        it[target] = instance.target
                     }
                     for (ipAddress in instance.privateIps) {
                         PrivateIpTable.insert {
@@ -75,6 +75,7 @@ object DbUtils {
                         it[instanceId] = instance.instanceId
                         it[accountId] = instance.accountId
                         it[region] = instance.region
+                        it[target] = instance.target
                     }
                     for (ipAddress in instance.privateIps) {
                         PrivateIpTable.update {
@@ -96,12 +97,20 @@ object DbUtils {
                     }
                 }
             }
-
-            // Delete entries that don't exist on cloud
-            toDelete.forEach { id ->
-                InstanceTable.deleteWhere { InstanceTable.instanceId eq id }
-            }
         }
+    }
+
+    fun fetchTagAsIp(target: String, tag: Pair<String, String>): List<String> {
+        val instances = if (target == "gcp") {
+            selectAllGcpInstances()
+        } else {
+            selectAllAwsInstances()
+        }
+
+        return instances
+            .filter { instance -> tag.first in instance.tags }
+            .map { instance -> instance.publicIps }
+            .flatten()
     }
 
     /**
@@ -120,35 +129,33 @@ object DbUtils {
         transaction {
             addLogger(Slf4jSqlInfoLogger)
 
-            InstanceTable.selectAll().forEach { result ->
+            InstanceTable.select { InstanceTable.target eq "gcp" }.forEach { result ->
                 internalIps.clear()
                 natIps.clear()
                 instanceTags.clear()
 
-                // GCP instances have unique identifiers that contain alphanumerics and hyphens
-                if (!result[InstanceTable.accountId].isNumeric()) {
-                    PrivateIpTable.select { PrivateIpTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
-                        internalIps.add(it[PrivateIpTable.ip])
-                    }
-                    PublicIpTable.select { PublicIpTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
-                        natIps.add(it[PublicIpTable.ip])
-                    }
-                    TagsTable.select { TagsTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
-                        val (key: String, value: String) = it[TagsTable.tag].split("=")
-                        instanceTags[key] = value
-                    }
-
-                    instances.add(
-                        instance {
-                            instanceId = result[InstanceTable.instanceId]
-                            accountId = result[InstanceTable.accountId]
-                            region = result[InstanceTable.region]
-                            privateIps = internalIps
-                            publicIps = natIps
-                            tags = instanceTags
-                        }
-                    )
+                PrivateIpTable.select { PrivateIpTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
+                    internalIps.add(it[PrivateIpTable.ip])
                 }
+                PublicIpTable.select { PublicIpTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
+                    natIps.add(it[PublicIpTable.ip])
+                }
+                TagsTable.select { TagsTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
+                    val (key: String, value: String) = it[TagsTable.tag].split("=")
+                    instanceTags[key] = value
+                }
+
+                instances.add(
+                    instance {
+                        instanceId = result[InstanceTable.instanceId]
+                        accountId = result[InstanceTable.accountId]
+                        region = result[InstanceTable.region]
+                        target = result[InstanceTable.target]
+                        privateIps = internalIps
+                        publicIps = natIps
+                        tags = instanceTags
+                    }
+                )
             }
         }
         return instances
@@ -170,43 +177,45 @@ object DbUtils {
         transaction {
             addLogger(Slf4jSqlInfoLogger)
 
-            InstanceTable.selectAll().forEach { result ->
+            InstanceTable.select{ InstanceTable.target eq "aws" }.forEach { result ->
                 internalIps.clear()
                 natIps.clear()
                 instanceTags.clear()
 
-                // AWS unique identifiers are completely numeric
-                if (result[InstanceTable.accountId].isNumeric()) {
-                    PrivateIpTable.select { PrivateIpTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
-                        internalIps.add(it[PrivateIpTable.ip])
-                    }
-                    PublicIpTable.select { PublicIpTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
-                        natIps.add(it[PublicIpTable.ip])
-                    }
-                    TagsTable.select { TagsTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
-                        val (key: String, value: String) = it[TagsTable.tag].split("=")
-                        instanceTags[key] = value
-                    }
-
-                    instances.add(
-                        instance {
-                            instanceId = result[InstanceTable.instanceId]
-                            accountId = result[InstanceTable.accountId]
-                            region = result[InstanceTable.region]
-                            privateIps = internalIps
-                            publicIps = natIps
-                            tags = instanceTags
-                        }
-                    )
+                PrivateIpTable.select { PrivateIpTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
+                    internalIps.add(it[PrivateIpTable.ip])
                 }
+                PublicIpTable.select { PublicIpTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
+                    natIps.add(it[PublicIpTable.ip])
+                }
+                TagsTable.select { TagsTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
+                    val (key: String, value: String) = it[TagsTable.tag].split("=")
+                    instanceTags[key] = value
+                }
+
+                instances.add(
+                    instance {
+                        instanceId = result[InstanceTable.instanceId]
+                        accountId = result[InstanceTable.accountId]
+                        region = result[InstanceTable.region]
+                        target = result[InstanceTable.target]
+                        privateIps = internalIps
+                        publicIps = natIps
+                        tags = instanceTags
+                    }
+                )
             }
         }
         return instances
     }
 
-    fun emptyTables() {
+    fun dropAllTables() {
         logInfo("DbUtils") { "Opening connection to ${db.url} to drop all tables" }
 
-        transaction { SchemaUtils.drop(InstanceTable, PrivateIpTable, PublicIpTable, TagsTable) }
+        transaction {
+            addLogger(Slf4jSqlInfoLogger)
+
+            SchemaUtils.drop(InstanceTable, PrivateIpTable, PublicIpTable, TagsTable)
+        }
     }
 }

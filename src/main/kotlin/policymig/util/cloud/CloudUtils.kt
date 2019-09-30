@@ -97,6 +97,7 @@ fun fetchInstancesFromGcp(project: String, computeService: Compute): List<Instan
                     instanceId = cloudInstance.id.toString()
                     accountId = project
                     region = cloudInstance.zone.split("/").last()
+                    target = "gcp"
                     privateIps = internalIps
                     publicIps = natIps
                     tags = instanceTags
@@ -163,6 +164,7 @@ fun fetchEc2Instances(): List<Instance> {
                                 instanceId = ec2Instance.instanceId()
                                 accountId = profileCredentials.resolveCredentials().accessKeyId()
                                 region = awsRegion
+                                target = "aws"
                                 privateIps = internalIps
                                 publicIps = natIps
                                 tags = instanceTags

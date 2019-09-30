@@ -17,6 +17,7 @@ object InstanceTable: Table("instances") {
     val instanceId: Column<String> = varchar("instance_id", 20).primaryKey()
     val accountId: Column<String> = varchar("account_id", 20)
     val region: Column<String> = varchar("region", 20)
+    var target: Column<String> = varchar("target", 3)
 }
 
 /**

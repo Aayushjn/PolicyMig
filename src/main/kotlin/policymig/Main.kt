@@ -20,6 +20,7 @@ import policymig.util.cloud.fetchInstancesFromGcp
 import policymig.util.db.DbUtils
 import policymig.util.io.readFromPcl
 import policymig.util.io.writeToPcl
+import policymig.util.misc.showLoading
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -80,14 +81,15 @@ class Apply: CliktCommand(
                 requireNotNull(credentialsFile)
                 createGcpProviderBlock(project!!, credentialsFile.toString())
                 policies.forEach { policy -> createGcpFirewallBlock(policy) }
-                terraformGcp()
+
+                showLoading("Applying policies on GCP", "Policy application complete") { terraformGcp() }
             } else {
                 if (project != null || credentialsFile != null) {
                     logWarning { "Project and/or credentials file are not required for AWS" }
                 }
 
                 policies.forEach { policy -> createAwsSecurityGroupBlock(policy) }
-                terraformAws()
+                showLoading("Applying policies on AWS", "Policy application complete") { terraformAws() }
             }
             2 -> {
                 requireNotNull(project)
@@ -100,8 +102,8 @@ class Apply: CliktCommand(
                         createAwsSecurityGroupBlock(policy)
                     }
                 }
-                terraformGcp()
-                terraformAws()
+                showLoading("Applying policies on GCP", "Policy application complete") { terraformGcp() }
+                showLoading("Applying policies on AWS", "Policy application complete") { terraformAws() }
             }
         }
     }
@@ -163,8 +165,14 @@ class Translate: CliktCommand(
 
         val policies = readFromPcl(file.toString())
         val translatedPolicies: MutableList<Policy> = mutableListOf()
-        policies.forEach { translatedPolicies.add(it.translatePolicy(target, region, network)) }
-        translatedPolicies.writeToPcl("translated_policies$FILE_EXTENSION")
+        val outputFile = "translated_policies$FILE_EXTENSION"
+
+        showLoading("Translating", "Saved to $outputFile") {
+            policies.forEach { policy ->
+                translatedPolicies.add(policy.translatePolicy(target, region, network))
+            }
+        }
+        translatedPolicies.writeToPcl(outputFile)
     }
 }
 
@@ -210,13 +218,15 @@ class Discover: CliktCommand(
                 echo("Project name must be specified!", err = true)
                 return
             }
-            instances = fetchInstancesFromGcp(project!!, createComputeService(credentialsFile.toString()))
+            instances = showLoading("Discovering on GCP", "Discovery complete!") {
+                fetchInstancesFromGcp(project!!, createComputeService(credentialsFile.toString()))
+            }
             if (instances.isEmpty()) {
                 logInfo { "No instances on GCP!" }
                 return
             }
         } else {
-            instances = fetchEc2Instances()
+            instances = showLoading("Discovering on AWS", "Discovery complete!") { fetchEc2Instances() }
             if (instances.isEmpty()) {
                 logInfo { "No instances on AWS!" }
                 return

@@ -1,6 +1,7 @@
 package policymig.util
 
 import policymig.model.Policy
+import policymig.util.db.DbUtils
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -119,18 +120,32 @@ fun createGcpFirewallBlock(policy: Policy) {
                 add(4, policy.network)
                 add(6, policy.direction)
                 add(8, policy.description)
-                if (policy.sourceIps == null) {
-                    removeAt(10)
+                if (policy.sourceTags == null) {
+                    if (policy.sourceIps == null) {
+                        removeAt(10)
+                    } else {
+                        add(11, "[" +
+                                policy.sourceIps.joinToString { item -> "\"$item\"" } +
+                                "]")
+                    }
                 } else {
+                    val ips = DbUtils.fetchTagsAsIp(policy.target, policy.sourceTags)
                     add(11, "[" +
-                            policy.sourceIps.joinToString { item -> "\"$item\"" } +
+                            ips.joinToString { item -> "\"$item\"" } +
                             "]")
                 }
-                if (policy.targetIps == null) {
-                    removeAt(12)
+                if (policy.targetTags == null) {
+                    if (policy.targetIps == null) {
+                        removeAt(12)
+                    } else {
+                        add(11, "[" +
+                                policy.targetIps.joinToString { item -> "\"$item\"" } +
+                                "]")
+                    }
                 } else {
+                    val ips = DbUtils.fetchTagsAsIp(policy.target, policy.targetTags)
                     add(11, "[" +
-                            policy.targetIps.joinToString { item -> "\"$item\"" } +
+                            ips.joinToString { item -> "\"$item\"" } +
                             "]")
                 }
 

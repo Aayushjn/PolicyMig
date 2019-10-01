@@ -75,7 +75,7 @@ fun fetchInstancesFromGcp(project: String, computeService: Compute): List<Instan
     val instances: MutableList<Instance> = mutableListOf()
     val internalIps: MutableList<String> = mutableListOf()
     val natIps: MutableList<String> = mutableListOf()
-    val instanceTags: MutableMap<String, String> = mutableMapOf()
+    val instanceTags: MutableList<Pair<String, String>> = mutableListOf()
 
     cloudInstancesMap.forEach {
         internalIps.clear()
@@ -90,7 +90,7 @@ fun fetchInstancesFromGcp(project: String, computeService: Compute): List<Instan
                 }
             }
             cloudInstance.metadata.items?.forEach { item ->
-                instanceTags[item.key] = item.value
+                instanceTags.add(item.key to item.value)
             }
             instances.add(
                 instance {
@@ -127,7 +127,7 @@ fun fetchEc2Instances(): List<Instance> {
     val instances: MutableList<Instance> = mutableListOf()
     val internalIps: MutableList<String> = mutableListOf()
     val natIps: MutableList<String> = mutableListOf()
-    val instanceTags: MutableMap<String, String> = mutableMapOf()
+    val instanceTags: MutableList<Pair<String, String>> = mutableListOf()
     var ec2: Ec2Client
     var nextToken: String?
     var request: DescribeInstancesRequest
@@ -157,7 +157,7 @@ fun fetchEc2Instances(): List<Instance> {
                             }
                             natIps.add(nif.association().publicIp())
                         }
-                        ec2Instance.tags().forEach { instanceTags[it.key()] = it.value() }
+                        ec2Instance.tags().forEach { instanceTags.add(it.key() to it.value()) }
 
                         instances.add(
                             instance {

@@ -17,7 +17,7 @@ data class Instance(
     var target: String,
     var privateIps: List<String>,
     var publicIps: List<String>,
-    var tags: Map<String, String>
+    var tags: List<Pair<String, String>>
 )
 
 @DslMarker
@@ -42,7 +42,7 @@ class InstanceBuilder {
     var target: String = ""
     var privateIps: List<String> = listOf()
     var publicIps: List<String> = listOf()
-    var tags: Map<String, String> = mapOf()
+    var tags: List<Pair<String, String>> = listOf()
 
     /**
      * Builds a [policymig.db.Instance]

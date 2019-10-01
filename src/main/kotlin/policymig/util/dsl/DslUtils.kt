@@ -20,9 +20,9 @@ class PolicyBuilder {
     var network: String? = null
     var region: String? = null
     var sourceIps: List<String>? = null
-    var sourceTags: Map<String, String>? = null
+    var sourceTags: List<Pair<String, String>>? = null
     var targetIps: List<String>? = null
-    var targetTags: Map<String, String>? = null
+    var targetTags: List<Pair<String, String>>? = null
     var rules: MutableList<Rule> = mutableListOf()
 
     fun rules(block: @PolicyDsl RULES.() -> Unit) = rules.addAll(RULES().apply(block))

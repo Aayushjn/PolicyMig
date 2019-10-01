@@ -27,9 +27,9 @@ data class Policy(val name: String,
                   var network: String?,
                   var region: String?,
                   val sourceIps: List<String>?,
-                  val sourceTags: Map<String, String>?,
+                  val sourceTags: List<Pair<String, String>>?,
                   val targetIps: List<String>?,
-                  val targetTags: Map<String, String>?,
+                  val targetTags: List<Pair<String, String>>?,
                   val rules: List<Rule>) {
     init {
         validate()
@@ -120,13 +120,13 @@ data class Policy(val name: String,
             appendln("\tsourceIps = [${it.joinToString {ip -> "\"$ip\"" }}]")
         }
         sourceTags?.let {
-            appendln("\tsourceTags = {${it.toList().joinToString { tag -> "\"${tag.first}=${tag.second}\"" }}}")
+            appendln("\tsourceTags = [${it.toList().joinToString { tag -> "\"${tag.first}=${tag.second}\"" }}]")
         }
         targetIps?.let {
             appendln("\ttargetIps = [${it.joinToString {ip -> "\"$ip\"" }}]")
         }
         targetTags?.let {
-            appendln("\ttargetTags = {${it.toList().joinToString { tag -> "\"${tag.first}=${tag.second}\"" }}}")
+            appendln("\ttargetTags = [${it.toList().joinToString { tag -> "\"${tag.first}=${tag.second}\"" }}]")
         }
         appendln("\trules {")
         rules.forEach { append("\t\t$it") }

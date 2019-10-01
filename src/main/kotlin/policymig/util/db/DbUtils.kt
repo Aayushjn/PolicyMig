@@ -64,7 +64,7 @@ object DbUtils {
                     }
                     for (instanceTag in instance.tags) {
                         TagsTable.insert {
-                            it[tag] = "${instanceTag.key}=${instanceTag.value}"
+                            it[tag] = "${instanceTag.first}=${instanceTag.second}"
                             it[instanceId] = instance.instanceId
                         }
                     }
@@ -90,7 +90,7 @@ object DbUtils {
                     }
                     for (instanceTag in instance.tags) {
                         TagsTable.update {
-                            it[tag] = "${instanceTag.key}=${instanceTag.value}"
+                            it[tag] = "${instanceTag.first}=${instanceTag.second}"
                             it[instanceId] = instance.instanceId
                         }
                     }
@@ -103,10 +103,11 @@ object DbUtils {
      * Converts tags to private IPs
      *
      * @param target cloud target to which instance belongs to (one of [policymig.util.TARGETS])
-     * @param tag key-value pair metadata of the instance
+     * @param tags key-value pairs that are metadata of the instance
+     *
      * @return list of IPs
      */
-    fun fetchTagAsIp(target: String, tag: Pair<String, String>): List<String> {
+    fun fetchTagsAsIp(target: String, tags: List<Pair<String, String>>): List<String> {
         val instances: List<Instance> = if (target == "gcp") {
             selectAllGcpInstances()
         } else {
@@ -114,7 +115,7 @@ object DbUtils {
         }
 
         return instances
-            .filter { instance -> tag.first in instance.tags }
+            .filter { instance -> tags.any { tag -> tag in instance.tags } }
             .map { instance -> instance.privateIps }
             .flatten()
     }
@@ -130,7 +131,7 @@ object DbUtils {
         val instances: MutableList<Instance> = mutableListOf()
         val internalIps: MutableList<String> = mutableListOf()
         val natIps: MutableList<String> = mutableListOf()
-        val instanceTags: MutableMap<String, String> = mutableMapOf()
+        val instanceTags: MutableList<Pair<String, String>> = mutableListOf()
 
         transaction {
             addLogger(Slf4jSqlDebugLogger)
@@ -148,7 +149,7 @@ object DbUtils {
                 }
                 TagsTable.select { TagsTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
                     val (key: String, value: String) = it[TagsTable.tag].split("=")
-                    instanceTags[key] = value
+                    instanceTags.add(key to value)
                 }
 
                 instances.add(
@@ -178,7 +179,7 @@ object DbUtils {
         val instances: MutableList<Instance> = mutableListOf()
         val internalIps: MutableList<String> = mutableListOf()
         val natIps: MutableList<String> = mutableListOf()
-        val instanceTags: MutableMap<String, String> = mutableMapOf()
+        val instanceTags: MutableList<Pair<String, String>> = mutableListOf()
 
         transaction {
             addLogger(Slf4jSqlDebugLogger)
@@ -196,7 +197,7 @@ object DbUtils {
                 }
                 TagsTable.select { TagsTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
                     val (key: String, value: String) = it[TagsTable.tag].split("=")
-                    instanceTags[key] = value
+                    instanceTags.add(key to value)
                 }
 
                 instances.add(

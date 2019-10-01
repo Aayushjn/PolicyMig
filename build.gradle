@@ -23,14 +23,15 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
 
     // CLI application dependency
-    implementation 'com.github.ajalt:clikt:2.1.0'
+    implementation 'com.github.ajalt:clikt:2.2.0'
 
     // Logging APIs
     implementation 'org.slf4j:slf4j-api:1.7.28'
-    implementation 'org.slf4j:slf4j-simple:1.7.28'
+    implementation 'ch.qos.logback:logback-core:1.2.3'
+    implementation 'ch.qos.logback:logback-classic:1.2.3'
 
     // Exposed persistence layer
-    implementation 'org.jetbrains.exposed:exposed:0.16.1'
+    implementation 'org.jetbrains.exposed:exposed:0.17.4'
     // MySQL JDBC driver
     implementation 'mysql:mysql-connector-java:8.0.17'
 
@@ -42,8 +43,8 @@ dependencies {
     implementation 'software.amazon.awssdk:ec2'
 
     // Testing environment with JUnit 5
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.1'
-    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.5.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.2'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.5.2'
 }
 
 test {

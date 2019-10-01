@@ -2,6 +2,7 @@ package policymig.util
 
 import policymig.model.Policy
 import java.io.File
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
@@ -102,7 +103,12 @@ fun createGcpFirewallBlock(policy: Policy) {
 
     with(Paths.get(DIRECTORY + File.separator + "gcp")) {
         if (!Files.exists(this)) {
-            Files.createDirectory(this)
+            try {
+                Files.createDirectory(this)
+            } catch (e: IOException) {
+                logError { "Perform discovery first!" }
+                return
+            }
         }
 
         var clonedBlock: MutableList<String>
@@ -151,6 +157,12 @@ fun createGcpFirewallBlock(policy: Policy) {
     }
 }
 
+/**
+ * Creates a "aws_security_group" resource block as defined by Terraform
+ * The number of blocks created depends on the number of rules the [policy] contains
+ *
+ * @param policy Policy to be written as a "aws_security_group" resource
+ */
 fun createAwsSecurityGroupBlock(policy: Policy) {
     require(policy.target == "aws") { "Only AWS policies allowed!" }
 
@@ -158,7 +170,12 @@ fun createAwsSecurityGroupBlock(policy: Policy) {
 
     with(Paths.get(DIRECTORY + File.separator + "aws")) {
         if (!Files.exists(this)) {
-            Files.createDirectory(this)
+            try {
+                Files.createDirectory(this)
+            } catch (e: IOException) {
+                logError { "Perform discovery first!" }
+                return
+            }
         }
 
         with(Paths.get(this.toString() + File.separator + policy.region)) {
@@ -230,6 +247,63 @@ fun createAwsSecurityGroupBlock(policy: Policy) {
 }
 
 /**
+ * Perform Terraform commands for GCP
+ */
+fun terraformGcp() {
+    val initCommand = runCommand("terraform init", "$DIRECTORY/gcp/")
+    logInfo { initCommand.first }
+    if (initCommand.second != "") {
+        logError { initCommand.second }
+        return
+    }
+    val planCommand = runCommand("terraform plan -out plan.out", "$DIRECTORY/gcp/")
+    logInfo { planCommand.first }
+    if (planCommand.second != "") {
+        logError { planCommand.second }
+        return
+    }
+    val applyCommand = runCommand("terraform apply plan.out", "$DIRECTORY/gcp/", 180)
+    logInfo { applyCommand.first }
+    if (applyCommand.second != "") {
+        logError { applyCommand.second }
+        return
+    }
+}
+
+/**
+ * Perform Terraform commands for AWS
+ */
+fun terraformAws() {
+    var initCommand: Pair<String, String>
+    var planCommand: Pair<String, String>
+    var applyCommand: Pair<String, String>
+
+    File(DIRECTORY).listFiles { pathname -> pathname.isDirectory }?.forEach { file ->
+        file.listFiles { pathname -> pathname.isDirectory }?.forEach { dir ->
+            logInfo { "Performing Terraform commands in $dir" }
+            initCommand = runCommand("terraform init", dir.toString())
+            logInfo { initCommand.first.trim() }
+            if (initCommand.second != "") {
+                logError { initCommand.second }
+                return
+            }
+            planCommand = runCommand("terraform plan -out plan.out", dir.toString())
+            logInfo { planCommand.first }
+            if (planCommand.second != "") {
+                logError { planCommand.second }
+                return
+            }
+            applyCommand = runCommand("terraform apply plan.out", dir.toString(), 180)
+            logInfo { applyCommand.first }
+            if (applyCommand.second != "") {
+                logError { applyCommand.second }
+                return
+            }
+        }
+    }
+}
+
+/**
  * Runs an external shell command
  * @param command Shell command to be executed
  * @param workingDirectory directory in which command must be executed. By default, it is $HOME
@@ -238,6 +312,7 @@ fun createAwsSecurityGroupBlock(policy: Policy) {
  * @return Returns a pair of the command's outputs to [System.out] and [System.err]
  */
 internal fun runCommand(command: String, workingDirectory: String = System.getenv("HOME"), timeout: Long = 60): Pair<String, String> {
+    logInfo { "Running command: $command" }
     val process = ProcessBuilder(listOf("/bin/sh", "-c", *command.split("\\s").toTypedArray()))
         .directory(File(workingDirectory))
         .redirectOutput(ProcessBuilder.Redirect.PIPE)
@@ -255,7 +330,7 @@ internal fun runCommand(command: String, workingDirectory: String = System.geten
  *
  * @return Randomly generated hex string
  */
-internal fun randomHexString(): String {
+private fun randomHexString(): String {
     val hexChars = ('a'..'z') + ('0'..'9')
     return hexChars.shuffled().take(8).joinToString("")
 }

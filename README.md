@@ -18,7 +18,7 @@ policy {
 //    network = "app-subnet"
     region = "us-east-2"
     sourceIps = ["10.10.35.48/16", "35.101.45.0/24"]
-//    sourceTags = ["app=App", "role=db", "env=MySQL", "ver=8.5"]
+    sourceTags = ["app=App", "role=db", "env=MySQL", "ver=8.5"]
 //    targetIps = ["0.0.0.0/0"]
 //    targetTags = ["role=conf"]
     rules {
@@ -43,11 +43,11 @@ _network_ is specified only if target is **gcp**. It must be the name of the tar
 _region_ is specified only if target is **aws**. It must be one of the regions specified by 
 [AWS](src/main/kotlin/policymig/util/PolicyUtils.kt).
 _sourceIps_ is a list of IPs. It must be specified only if direction is **INGRESS**.<br>
-_sourceTags_ is a list of "key=value" pairs that are user-defined. Either _sourceIps_ or _sourceTags_ must be provided 
-(not both).<br>
+_sourceTags_ is a list of "key=value" pairs that are user-defined. If both _sourceIps_ and _sourceTags_ are provided,  
+priority is given to _sourceTags_.<br>
 _targetIps_ is a list of IPs. It must be specified only if direction is **EGRESS**.<br>
-_targetTags_ is a list of "key=value" pairs that are user-defined. Either _targetIps_ or _targetTags_ must be provided 
-(not both).<br>
+_targetTags_ is a list of "key=value" pairs that are user-defined. If both _targetIps_ and _targetTags_ are provided, 
+priority is given to _targetTags_.<br>
 
 Each rule's _action_ is either **allow** or **deny**.
 The protocol must be one of those mentioned [here](src/main/kotlin/policymig/util/PolicyUtils.kt). **all** is invalid 
@@ -60,9 +60,9 @@ ___
 - [ ] Policy DSL
     - [x] Write to file
     - [ ] Read from file
-- [ ] Terraform configuration generation
+- [x] Terraform configuration generation
     - [x] GCP
-    - [ ] AWS
+    - [x] AWS
 - [x] Cloud discovery
     - [x] GCP
     - [x] AWS

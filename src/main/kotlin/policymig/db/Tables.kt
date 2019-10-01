@@ -12,6 +12,7 @@ import policymig.util.TAG_REGEX
  * @property instanceId unique id of each instance
  * @property accountId unique id of each cloud account
  * @property region region in which instance is located
+ * @property target cloud target to which instance belongs to (one of [policymig.util.TARGETS])
  */
 object InstanceTable: Table("instances") {
     val instanceId: Column<String> = varchar("instance_id", 20).primaryKey()

@@ -1,12 +1,8 @@
 package policymig.util
 
-import org.jetbrains.exposed.sql.SqlLogger
-import org.jetbrains.exposed.sql.Transaction
-import org.jetbrains.exposed.sql.exposedLogger
-import org.jetbrains.exposed.sql.statements.StatementContext
-import org.jetbrains.exposed.sql.statements.expandArgs
-import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.slf4j.LoggerFactory
+import java.io.PrintWriter
+import java.io.StringWriter
 
 /**
  * Logs to INFO level
@@ -33,12 +29,11 @@ inline fun logWarning(name: String = "PolicyMig", msg: () -> Any) = LoggerFactor
 inline fun logError(name: String = "PolicyMig", msg: () -> Any) = LoggerFactory.getLogger(name).error(msg().toString())
 
 /**
- * Logs SQL queries using Slf4j at INFO level
+ * Extension function to get stacktrace as string
+ *
+ * @return stacktrace as a string
  */
-object Slf4jSqlInfoLogger: SqlLogger {
-    override fun log(context: StatementContext, transaction: Transaction) {
-        if (exposedLogger.isInfoEnabled) {
-            exposedLogger.info(context.expandArgs(TransactionManager.current()))
-        }
-    }
+fun Throwable.stackTraceAsString(): String = with(StringWriter()) {
+    printStackTrace(PrintWriter(this, true))
+    return buffer.toString()
 }

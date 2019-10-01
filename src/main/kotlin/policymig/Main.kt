@@ -21,7 +21,9 @@ import policymig.util.db.DbUtils
 import policymig.util.io.readFromPcl
 import policymig.util.io.writeToPcl
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 
 /**
  * Base CLI command
@@ -33,7 +35,7 @@ class PolicyMigrate: CliktCommand(
     help = "CLI tool to translate and apply policies on the cloud",
     printHelpOnEmptyArgs = true
 ) {
-        override fun run() = Thread.setDefaultUncaughtExceptionHandler { _, e -> logError { "${e::class.java.simpleName}: ${e.message}" } }
+    override fun run() = Thread.setDefaultUncaughtExceptionHandler { _, e -> logError { e.stackTraceAsString() } }
 }
 
 /**
@@ -51,7 +53,7 @@ class Apply: CliktCommand(
     help = "Apply the policies to specified targets from a given file",
     printHelpOnEmptyArgs = true
 ) {
-    private val file: Path by option("-f", "--file", help = "Path to file to read policies from")
+    private val file: Path by option("-f", "--file", help = "path to file to read policies from")
         .path(exists = true, folderOkay = false, readable = true)
         .required()
         .validate {
@@ -78,12 +80,14 @@ class Apply: CliktCommand(
                 requireNotNull(credentialsFile)
                 createGcpProviderBlock(project!!, credentialsFile.toString())
                 policies.forEach { policy -> createGcpFirewallBlock(policy) }
+                terraformGcp()
             } else {
                 if (project != null || credentialsFile != null) {
                     logWarning { "Project and/or credentials file are not required for AWS" }
                 }
 
                 policies.forEach { policy -> createAwsSecurityGroupBlock(policy) }
+                terraformAws()
             }
             2 -> {
                 requireNotNull(project)
@@ -96,26 +100,9 @@ class Apply: CliktCommand(
                         createAwsSecurityGroupBlock(policy)
                     }
                 }
+                terraformGcp()
+                terraformAws()
             }
-        }
-
-        val initCommand = runCommand("terraform init", "$DIRECTORY/gcp/")
-        logInfo { initCommand.first }
-        if (initCommand.second != "") {
-            logError { initCommand.second }
-            return
-        }
-        val planCommand = runCommand("terraform plan -out plan.out", "$DIRECTORY/gcp/")
-        logInfo { planCommand.first }
-        if (planCommand.second != "") {
-            logError { planCommand.second }
-            return
-        }
-        val applyCommand = runCommand("terraform apply plan.out", "$DIRECTORY/gcp/", 180)
-        logInfo { applyCommand.first }
-        if (applyCommand.second != "") {
-            logError { applyCommand.second }
-            return
         }
     }
 }
@@ -211,6 +198,12 @@ class Discover: CliktCommand(
         }
 
     override fun run() {
+        with(Paths.get(DIRECTORY)) {
+            if (!Files.exists(this)) {
+                Files.createDirectory(this)
+            }
+        }
+
         val instances: List<Instance>
         if (target == "gcp") {
             if (project == null) {
@@ -219,16 +212,17 @@ class Discover: CliktCommand(
             }
             instances = fetchInstancesFromGcp(project!!, createComputeService(credentialsFile.toString()))
             if (instances.isEmpty()) {
-                logInfo { "No instances on GCP" }
+                logInfo { "No instances on GCP!" }
                 return
             }
         } else {
             instances = fetchEc2Instances()
             if (instances.isEmpty()) {
-                logInfo { "No instances on AWS" }
+                logInfo { "No instances on AWS!" }
                 return
             }
         }
+        logInfo { "${instances.size} instances discovered!" }
         DbUtils.insertIntoTable(instances)
     }
 }
@@ -255,8 +249,8 @@ class Clean: CliktCommand(
         if (destroy) {
             var destroyCommand: Pair<String, String>
             File(DIRECTORY).listFiles { pathname -> pathname.isDirectory }?.forEach { file ->
-                logInfo { file }
                 file.listFiles { pathname -> pathname.isDirectory }?.forEach { dir ->
+                    logInfo { "Destroying resources in $dir" }
                     destroyCommand = runCommand("terraform destroy -auto-approve", workingDirectory = dir.toString(), timeout = 180)
                     logInfo { destroyCommand.first.trim() }
                     if (destroyCommand.second != "") {

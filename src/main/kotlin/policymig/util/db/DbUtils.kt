@@ -3,7 +3,6 @@ package policymig.util.db
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import policymig.db.*
-import policymig.util.Slf4jSqlInfoLogger
 import policymig.util.logInfo
 
 internal const val DB_NAME: String = "policy_mig"
@@ -30,7 +29,7 @@ object DbUtils {
         logInfo("DbUtils") { "Opening connection to ${db.url} for insert/update" }
 
         transaction {
-            addLogger(Slf4jSqlInfoLogger)
+            addLogger(Slf4jSqlDebugLogger)
 
             // Creates tables if they don't already exist
             SchemaUtils.create(InstanceTable, PrivateIpTable, PublicIpTable, TagsTable)
@@ -100,8 +99,15 @@ object DbUtils {
         }
     }
 
+    /**
+     * Converts tags to private IPs
+     *
+     * @param target cloud target to which instance belongs to (one of [policymig.util.TARGETS])
+     * @param tag key-value pair metadata of the instance
+     * @return list of IPs
+     */
     fun fetchTagAsIp(target: String, tag: Pair<String, String>): List<String> {
-        val instances = if (target == "gcp") {
+        val instances: List<Instance> = if (target == "gcp") {
             selectAllGcpInstances()
         } else {
             selectAllAwsInstances()
@@ -109,7 +115,7 @@ object DbUtils {
 
         return instances
             .filter { instance -> tag.first in instance.tags }
-            .map { instance -> instance.publicIps }
+            .map { instance -> instance.privateIps }
             .flatten()
     }
 
@@ -118,7 +124,7 @@ object DbUtils {
      *
      * @return list of [policymig.db.Instance]
      */
-    fun selectAllGcpInstances(): List<Instance> {
+    private fun selectAllGcpInstances(): List<Instance> {
         logInfo("DbUtils") { "Opening connection to ${db.url} to fetch GCP instances" }
 
         val instances: MutableList<Instance> = mutableListOf()
@@ -127,7 +133,7 @@ object DbUtils {
         val instanceTags: MutableMap<String, String> = mutableMapOf()
 
         transaction {
-            addLogger(Slf4jSqlInfoLogger)
+            addLogger(Slf4jSqlDebugLogger)
 
             InstanceTable.select { InstanceTable.target eq "gcp" }.forEach { result ->
                 internalIps.clear()
@@ -166,7 +172,7 @@ object DbUtils {
      *
      * @return list of [policymig.db.Instance]
      */
-    fun selectAllAwsInstances(): List<Instance> {
+    private fun selectAllAwsInstances(): List<Instance> {
         logInfo("DbUtils") { "Opening connection to ${db.url} to fetch AWS instances" }
 
         val instances: MutableList<Instance> = mutableListOf()
@@ -175,7 +181,7 @@ object DbUtils {
         val instanceTags: MutableMap<String, String> = mutableMapOf()
 
         transaction {
-            addLogger(Slf4jSqlInfoLogger)
+            addLogger(Slf4jSqlDebugLogger)
 
             InstanceTable.select{ InstanceTable.target eq "aws" }.forEach { result ->
                 internalIps.clear()
@@ -209,11 +215,14 @@ object DbUtils {
         return instances
     }
 
+    /**
+     * Drops all tables utilized by the app
+     */
     fun dropAllTables() {
         logInfo("DbUtils") { "Opening connection to ${db.url} to drop all tables" }
 
         transaction {
-            addLogger(Slf4jSqlInfoLogger)
+            addLogger(Slf4jSqlDebugLogger)
 
             SchemaUtils.drop(InstanceTable, PrivateIpTable, PublicIpTable, TagsTable)
         }

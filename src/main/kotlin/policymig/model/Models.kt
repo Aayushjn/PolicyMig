@@ -43,13 +43,13 @@ data class Policy(val name: String,
 
         if (direction.toUpperCase() == "INGRESS") {
             // For INGRESS, target is self
-            require((sourceIps != null && sourceTags == null && targetIps == null && targetTags == null) ||
-                    (sourceTags != null && sourceIps == null && targetIps == null && targetTags == null))
+            require((sourceIps != null && targetIps == null && targetTags == null) ||
+                    (sourceTags != null && targetIps == null && targetTags == null))
             { "Ingress requires either source IPs or tags be set!" }
         } else {
             // For EGRESS, source is self
-            require((targetIps != null && sourceIps == null && sourceTags == null && targetTags == null) ||
-                    (targetTags != null && sourceIps == null && sourceTags == null && targetIps == null))
+            require((targetIps != null && sourceIps == null && sourceTags == null) ||
+                    (targetTags != null && sourceIps == null && sourceTags == null))
             { "Egress requires either target IPs or tags be set!" }
         }
 

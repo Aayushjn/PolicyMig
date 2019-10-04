@@ -35,9 +35,9 @@ private class ProgressBar(private val begin: String = "Processing", private val 
  * @return returns the return value of [function]
  */
 internal fun <T> showLoading(begin: String, end: String, function: () -> T): T =
-    with(ProgressBar(begin, end)) {
-        start()
+    ProgressBar(begin, end).let {
+        it.start()
         val returnValue = function()
-        showProgress = false
-        return returnValue
+        it.showProgress = false
+        returnValue
     }

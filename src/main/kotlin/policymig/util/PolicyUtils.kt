@@ -1,3 +1,4 @@
+@file:JvmName("PolicyUtils")
 package policymig.util
 
 val TARGETS: Array<String> = arrayOf("aws", "gcp")

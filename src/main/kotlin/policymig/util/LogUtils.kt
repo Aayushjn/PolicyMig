@@ -1,3 +1,4 @@
+@file:JvmName("LogUtils")
 package policymig.util
 
 import org.slf4j.LoggerFactory

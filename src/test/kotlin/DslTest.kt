@@ -1,12 +1,9 @@
-import policymig.model.Policy
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import policymig.util.FILE_EXTENSION
 import policymig.util.dsl.policy
-import policymig.util.io.readFromPcl
-import policymig.util.io.writeToPcl
 import java.io.File
 
 class DslTest {
@@ -80,7 +77,7 @@ class DslTest {
 //            network = "default"
 //            direction = "INGRESS"
 ////            sourceIps = listOf("192.168.2.0/16", "10.53.25.192/24")
-//            sourceTags = mapOf("app" to "PolicyMig", "role" to "test-env", "dev" to "Kt-1.3.50")
+//            sourceTags = listOf("app" to "PolicyMig", "role" to "test-env", "dev" to "Kt-1.3.50")
 ////            targetIps = listOf("0.0.0.0/0")
 //            rules {
 //                rule {
@@ -112,8 +109,8 @@ class DslTest {
                 network = "default"
                 direction = "INGRESS"
                 sourceIps = listOf("192.22.6.355")
-//                sourceTags = mapOf("app" to "jarviss", "role" to "test")
-                targetTags = mapOf("app" to "jarviss", "role" to "db", "env" to "mysql")
+//                sourceTags = listOf("app" to "PolicyMig", "role" to "test")
+                targetTags = listOf("app" to "PolicyMig", "role" to "db", "env" to "mysql")
                 rules {
                     rule {
                         ports = listOf("8080", "5500-5600")

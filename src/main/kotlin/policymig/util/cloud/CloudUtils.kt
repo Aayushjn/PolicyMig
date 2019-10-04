@@ -1,3 +1,4 @@
+@file:JvmName("CloudUtils")
 package policymig.util.cloud
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
@@ -14,9 +15,7 @@ import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.core.exception.SdkClientException
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.ec2.Ec2Client
-import software.amazon.awssdk.services.ec2.model.DescribeInstancesRequest
-import software.amazon.awssdk.services.ec2.model.DescribeInstancesResponse
-import software.amazon.awssdk.services.ec2.model.Ec2Exception
+import software.amazon.awssdk.services.ec2.model.*
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -36,13 +35,15 @@ import java.security.GeneralSecurityException
 fun createComputeService(credentialsFile: String): Compute {
     require(Files.exists(Paths.get(credentialsFile))) { "$credentialsFile doesn't exist" }
 
-    val httpTransport = GoogleNetHttpTransport.newTrustedTransport()
-    val jsonFactory = JacksonFactory.getDefaultInstance()
     var credentials: GoogleCredential = GoogleCredential.fromStream(File(credentialsFile).inputStream())
     if (credentials.createScopedRequired()) {
         credentials = credentials.createScoped(listOf("https://www.googleapis.com/auth/cloud-platform"))
     }
-    return Compute.Builder(httpTransport, jsonFactory, credentials)
+    return Compute.Builder(
+            GoogleNetHttpTransport.newTrustedTransport(),
+            JacksonFactory.getDefaultInstance(),
+            credentials
+        )
         .setApplicationName("PolicyMig")
         .build()
 }
@@ -84,13 +85,13 @@ fun fetchInstancesFromGcp(project: String, computeService: Compute): List<Instan
 
         it.value.instances.forEach { cloudInstance ->
             cloudInstance.networkInterfaces.forEach { nif ->
-                internalIps.add(nif.networkIP)
+                internalIps += nif.networkIP
                 nif.accessConfigs.forEach { accessConfig ->
-                    natIps.add(accessConfig.natIP)
+                    natIps += accessConfig.natIP
                 }
             }
             cloudInstance.metadata.items?.forEach { item ->
-                instanceTags.add(item.key to item.value)
+                instanceTags += item.key to item.value
             }
             instances.add(
                 instance {
@@ -125,6 +126,7 @@ fun fetchEc2Instances(): List<Instance> {
     val profileCredentials: DefaultCredentialsProvider = DefaultCredentialsProvider.create()
 
     val instances: MutableList<Instance> = mutableListOf()
+    val nifIds: MutableList<String> = mutableListOf()
     val internalIps: MutableList<String> = mutableListOf()
     val natIps: MutableList<String> = mutableListOf()
     val instanceTags: MutableList<Pair<String, String>> = mutableListOf()
@@ -152,12 +154,13 @@ fun fetchEc2Instances(): List<Instance> {
                         instanceTags.clear()
 
                         ec2Instance.networkInterfaces().forEach { nif ->
+                            nifIds += nif.networkInterfaceId()
                             nif.privateIpAddresses().forEach {
-                                internalIps.add(it.privateIpAddress())
+                                internalIps += it.privateIpAddress()
                             }
-                            natIps.add(nif.association().publicIp())
+                            natIps += nif.association().publicIp()
                         }
-                        ec2Instance.tags().forEach { instanceTags.add(it.key() to it.value()) }
+                        ec2Instance.tags().forEach { instanceTags += it.key() to it.value() }
 
                         instances.add(
                             instance {
@@ -165,6 +168,7 @@ fun fetchEc2Instances(): List<Instance> {
                                 accountId = profileCredentials.resolveCredentials().accessKeyId()
                                 region = awsRegion
                                 target = "aws"
+                                networkInterfaceIds = nifIds
                                 privateIps = internalIps
                                 publicIps = natIps
                                 tags = instanceTags
@@ -183,4 +187,15 @@ fun fetchEc2Instances(): List<Instance> {
         }
     }
     return instances
+}
+
+fun attachSecurityGroups(networkInterfaceId: String, securityGroupId: String) {
+    val profileCredentials: DefaultCredentialsProvider = DefaultCredentialsProvider.create()
+    val ec2: Ec2Client = Ec2Client.builder().credentialsProvider(profileCredentials).build()
+
+    val request: ModifyNetworkInterfaceAttributeRequest = ModifyNetworkInterfaceAttributeRequest.builder()
+        .groups(securityGroupId)
+        .networkInterfaceId(networkInterfaceId)
+        .build()
+    ec2.modifyNetworkInterfaceAttribute(request)
 }

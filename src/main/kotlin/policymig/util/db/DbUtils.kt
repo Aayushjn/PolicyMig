@@ -1,3 +1,4 @@
+@file:JvmName("DbUtils")
 package policymig.util.db
 
 import org.jetbrains.exposed.sql.*
@@ -50,6 +51,12 @@ object DbUtils {
                         it[region] = instance.region
                         it[target] = instance.target
                     }
+                    for (nifId in instance.networkInterfaceIds) {
+                        NetworkInterfacesTable.insert {
+                            it[nif] = nifId
+                            it[instanceId] = instance.instanceId
+                        }
+                    }
                     for (ipAddress in instance.privateIps) {
                         PrivateIpTable.insert {
                             it[ip] = ipAddress
@@ -75,6 +82,12 @@ object DbUtils {
                         it[accountId] = instance.accountId
                         it[region] = instance.region
                         it[target] = instance.target
+                    }
+                    for (nifId in instance.networkInterfaceIds) {
+                        NetworkInterfacesTable.insert {
+                            it[nif] = nifId
+                            it[instanceId] = instance.instanceId
+                        }
                     }
                     for (ipAddress in instance.privateIps) {
                         PrivateIpTable.update {
@@ -129,6 +142,7 @@ object DbUtils {
         logInfo("DbUtils") { "Opening connection to ${db.url} to fetch GCP instances" }
 
         val instances: MutableList<Instance> = mutableListOf()
+        val nifIds: MutableList<String> = mutableListOf()
         val internalIps: MutableList<String> = mutableListOf()
         val natIps: MutableList<String> = mutableListOf()
         val instanceTags: MutableList<Pair<String, String>> = mutableListOf()
@@ -137,32 +151,35 @@ object DbUtils {
             addLogger(Slf4jSqlDebugLogger)
 
             InstanceTable.select { InstanceTable.target eq "gcp" }.forEach { result ->
+                nifIds.clear()
                 internalIps.clear()
                 natIps.clear()
                 instanceTags.clear()
 
+                NetworkInterfacesTable.select { NetworkInterfacesTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
+                    nifIds += it[NetworkInterfacesTable.nif]
+                }
                 PrivateIpTable.select { PrivateIpTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
-                    internalIps.add(it[PrivateIpTable.ip])
+                    internalIps += it[PrivateIpTable.ip]
                 }
                 PublicIpTable.select { PublicIpTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
-                    natIps.add(it[PublicIpTable.ip])
+                    natIps += it[PublicIpTable.ip]
                 }
                 TagsTable.select { TagsTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
                     val (key: String, value: String) = it[TagsTable.tag].split("=")
-                    instanceTags.add(key to value)
+                    instanceTags += key to value
                 }
 
-                instances.add(
-                    instance {
-                        instanceId = result[InstanceTable.instanceId]
-                        accountId = result[InstanceTable.accountId]
-                        region = result[InstanceTable.region]
-                        target = result[InstanceTable.target]
-                        privateIps = internalIps
-                        publicIps = natIps
-                        tags = instanceTags
-                    }
-                )
+                instances += instance {
+                    instanceId = result[InstanceTable.instanceId]
+                    accountId = result[InstanceTable.accountId]
+                    region = result[InstanceTable.region]
+                    target = result[InstanceTable.target]
+                    networkInterfaceIds = nifIds
+                    privateIps = internalIps
+                    publicIps = natIps
+                    tags = instanceTags
+                }
             }
         }
         return instances
@@ -177,6 +194,7 @@ object DbUtils {
         logInfo("DbUtils") { "Opening connection to ${db.url} to fetch AWS instances" }
 
         val instances: MutableList<Instance> = mutableListOf()
+        val nifIds: MutableList<String> = mutableListOf()
         val internalIps: MutableList<String> = mutableListOf()
         val natIps: MutableList<String> = mutableListOf()
         val instanceTags: MutableList<Pair<String, String>> = mutableListOf()
@@ -184,33 +202,36 @@ object DbUtils {
         transaction {
             addLogger(Slf4jSqlDebugLogger)
 
-            InstanceTable.select{ InstanceTable.target eq "aws" }.forEach { result ->
+            InstanceTable.select { InstanceTable.target eq "aws" }.forEach { result ->
+                nifIds.clear()
                 internalIps.clear()
                 natIps.clear()
                 instanceTags.clear()
 
+                NetworkInterfacesTable.select { NetworkInterfacesTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
+                    nifIds += it[NetworkInterfacesTable.nif]
+                }
                 PrivateIpTable.select { PrivateIpTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
-                    internalIps.add(it[PrivateIpTable.ip])
+                    internalIps += it[PrivateIpTable.ip]
                 }
                 PublicIpTable.select { PublicIpTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
-                    natIps.add(it[PublicIpTable.ip])
+                    natIps += it[PublicIpTable.ip]
                 }
                 TagsTable.select { TagsTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
                     val (key: String, value: String) = it[TagsTable.tag].split("=")
-                    instanceTags.add(key to value)
+                    instanceTags += key to value
                 }
 
-                instances.add(
-                    instance {
-                        instanceId = result[InstanceTable.instanceId]
-                        accountId = result[InstanceTable.accountId]
-                        region = result[InstanceTable.region]
-                        target = result[InstanceTable.target]
-                        privateIps = internalIps
-                        publicIps = natIps
-                        tags = instanceTags
-                    }
-                )
+                instances += instance {
+                    instanceId = result[InstanceTable.instanceId]
+                    accountId = result[InstanceTable.accountId]
+                    region = result[InstanceTable.region]
+                    target = result[InstanceTable.target]
+                    networkInterfaceIds = nifIds
+                    privateIps = internalIps
+                    publicIps = natIps
+                    tags = instanceTags
+                }
             }
         }
         return instances

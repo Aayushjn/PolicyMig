@@ -22,9 +22,9 @@ GCP_PROVIDER_VERSION="2.15.0"
 mkdir -p ~/.terraform.d/plugins
 if [[ ! -f ~/.terraform.d/plugins/terraform-provider-aws_v${AWS_PROVIDER_VERSION}_x4 ]]; then
   printf "Installing Terraform AWS provider plugin v%s...\n" "$AWS_PROVIDER_VERSION"
-    curl -L https://releases.hashicorp.com/terraform-provider-aws/${AWS_PROVIDER_VERSION}/terraform-provider-aws_${AWS_PROVIDER_VERSION}_linux_amd64.zip -o /tmp/aws_provider.zip
-    unzip -o /tmp/aws_provider.zip -d ~/.terraform.d/plugins && rm /tmp/aws_provider.zip
-    printf "Terraform AWS plugins installed\n"
+  curl -L https://releases.hashicorp.com/terraform-provider-aws/${AWS_PROVIDER_VERSION}/terraform-provider-aws_${AWS_PROVIDER_VERSION}_linux_amd64.zip -o /tmp/aws_provider.zip
+  unzip -o /tmp/aws_provider.zip -d ~/.terraform.d/plugins && rm /tmp/aws_provider.zip
+  printf "Terraform AWS plugins installed\n"
 fi
 if [[ ! -f ~/.terraform.d/plugins/terraform-provider-google_v${GCP_PROVIDER_VERSION}_x4 ]]; then
   printf "Installing Terraform GCP provider plugin v%s...\n" "$GCP_PROVIDER_VERSION"

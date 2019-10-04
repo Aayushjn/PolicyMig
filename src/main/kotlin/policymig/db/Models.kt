@@ -1,3 +1,4 @@
+@file:JvmName("DbModels")
 package policymig.db
 
 /**
@@ -15,6 +16,7 @@ data class Instance(
     var accountId: String,
     var region: String,
     var target: String,
+    var networkInterfaceIds: List<String>,
     var privateIps: List<String>,
     var publicIps: List<String>,
     var tags: List<Pair<String, String>>
@@ -40,6 +42,7 @@ class InstanceBuilder {
     var accountId: String = ""
     var region: String = ""
     var target: String = ""
+    var networkInterfaceIds: List<String> = listOf()
     var privateIps: List<String> = listOf()
     var publicIps: List<String> = listOf()
     var tags: List<Pair<String, String>> = listOf()
@@ -49,7 +52,7 @@ class InstanceBuilder {
      *
      * @return [policymig.db.Instance]
      */
-    internal fun build(): Instance = Instance(instanceId, accountId, region, target, privateIps, publicIps, tags)
+    internal fun build(): Instance = Instance(instanceId, accountId, region, target, networkInterfaceIds, privateIps, publicIps, tags)
 }
 
 /**

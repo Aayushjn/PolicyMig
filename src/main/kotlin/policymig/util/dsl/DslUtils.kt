@@ -1,3 +1,4 @@
+@file:JvmName("DslUtils")
 package policymig.util.dsl
 
 import policymig.model.Policy

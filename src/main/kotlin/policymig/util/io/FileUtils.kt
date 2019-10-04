@@ -1,3 +1,4 @@
+@file:JvmName("FileUtils")
 package policymig.util.io
 
 import policymig.model.Policy
@@ -67,9 +68,9 @@ fun readFromPcl(filename: String): MutableList<Policy> {
     var action: String
     var protocol: String
     var sourceIps: List<String>?
-    var sourceTags: Map<String, String>?
+    var sourceTags: List<Pair<String, String>>?
     var targetIps: List<String>?
-    var targetTags: Map<String, String>?
+    var targetTags: List<Pair<String, String>>?
     val rules: MutableSet<Rule> = mutableSetOf()
 
     for (policy: List<List<String>> in lines) {
@@ -121,7 +122,7 @@ fun readFromPcl(filename: String): MutableList<Policy> {
                 }
                 "sourceTags" -> {
                     // Creates a map of all "key=value" elements
-                    sourceTags = property[1].trim().split(",").associate {
+                    sourceTags = property[1].trim().split(",").map {
                         val (left: String, right: String) = it.trim().split("=").map {x ->
                             // Removes {} from the input
                             x.trim().replace("[{}]".toRegex(), "")
@@ -143,7 +144,7 @@ fun readFromPcl(filename: String): MutableList<Policy> {
                 }
                 "targetTags" -> {
                     // Creates a map of all "key=value" elements
-                    targetTags = property[1].trim().split(",").associate {
+                    targetTags = property[1].trim().split(",").map {
                         val (left: String, right: String) = it.trim().split("=").map {x ->
                             // Removes {} from the input
                             x.trim().replace("[{}]".toRegex(), "")

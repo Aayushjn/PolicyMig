@@ -1,3 +1,4 @@
+@file:JvmName("TerraformUtils")
 package policymig.util
 
 import policymig.model.Policy
@@ -240,10 +241,21 @@ fun createAwsSecurityGroupBlock(policy: Policy) {
                             } else {
                                 add(5, rule.protocol)
                             }
-                            policy.sourceIps?.let { ips ->
+                            if (policy.sourceTags == null) {
+                                policy.sourceIps?.let { ip ->
+                                    add(7, "[${ip.joinToString { item -> "\"$item\"" }}]")
+                                }
+                            } else {
+                                val ips = DbUtils.fetchTagsAsIp(policy.target, policy.sourceTags)
                                 add(7, "[${ips.joinToString { item -> "\"$item\"" }}]")
                             }
-                            policy.targetIps?.let { ips ->
+
+                            if (policy.targetTags == null) {
+                                policy.targetIps?.let { ip ->
+                                    add(7, "[${ip.joinToString { item -> "\"$item\"" }}]")
+                                }
+                            } else {
+                                val ips = DbUtils.fetchTagsAsIp(policy.target, policy.targetTags)
                                 add(7, "[${ips.joinToString { item -> "\"$item\"" }}]")
                             }
                         }
@@ -297,7 +309,7 @@ fun terraformAws() {
         file.listFiles { pathname -> pathname.isDirectory }?.forEach { dir ->
             logInfo { "Performing Terraform commands in $dir" }
             initCommand = runCommand("terraform init", dir.toString())
-            logInfo { initCommand.first.trim() }
+            logInfo { initCommand.first }
             if (initCommand.second != "") {
                 logError { initCommand.second }
                 return
@@ -333,11 +345,9 @@ internal fun runCommand(command: String, workingDirectory: String = System.geten
         .redirectOutput(ProcessBuilder.Redirect.PIPE)
         .redirectError(ProcessBuilder.Redirect.PIPE)
         .start()
-        .apply {
-            waitFor(timeout, TimeUnit.SECONDS)
-        }
+        .apply { waitFor(timeout, TimeUnit.SECONDS) }
 
-    return process.inputStream.bufferedReader().readText() to process.errorStream.bufferedReader().readText()
+    return process.inputStream.bufferedReader().readText().trim() to process.errorStream.bufferedReader().readText().trim()
 }
 
 /**

@@ -91,21 +91,12 @@ data class Policy(val name: String,
     fun translatePolicy(target: String, region: String?=null, network: String?=null): Policy {
         require(target in TARGETS) { "Target must be one of ${TARGETS.contentDeepToString()}" }
 
-        val newPolicy: Policy = copy()
-
-        newPolicy.target = target
-        if (target == "aws") {
-            newPolicy.network = null
-            newPolicy.region = region
-        } else if (target == "gcp") {
-            newPolicy.network = network
-            newPolicy.region = null
-        }
-
-        // Check whether the translated policy is valid or not (protocol issues)
-        newPolicy.validate()
-
-        return newPolicy
+        return copy(
+            target = target,
+            network = if (target == "aws") null else network,
+            region = if (target == "aws") region else null,
+            rules = rules.filter { rule -> rule.action == "allow" && (rule.protocol == "tcp" || rule.protocol == "udp" || rule.protocol == "icmp") }
+        )
     }
 
     override fun toString(): String = buildString {

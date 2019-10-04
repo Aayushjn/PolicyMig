@@ -1,4 +1,3 @@
-@file:JvmName("DbUtils")
 package policymig.util.db
 
 import org.jetbrains.exposed.sql.*
@@ -51,25 +50,25 @@ object DbUtils {
                         it[region] = instance.region
                         it[target] = instance.target
                     }
-                    for (nifId in instance.networkInterfaceIds) {
+                    instance.networkInterfaceIds.forEach { nifId ->
                         NetworkInterfacesTable.insert {
                             it[nif] = nifId
                             it[instanceId] = instance.instanceId
                         }
                     }
-                    for (ipAddress in instance.privateIps) {
+                    instance.privateIps.forEach { ipAddress ->
                         PrivateIpTable.insert {
                             it[ip] = ipAddress
                             it[instanceId] = instance.instanceId
                         }
                     }
-                    for (ipAddress in instance.publicIps) {
+                    instance.publicIps.forEach { ipAddress ->
                         PublicIpTable.insert {
                             it[ip] = ipAddress
                             it[instanceId] = instance.instanceId
                         }
                     }
-                    for (instanceTag in instance.tags) {
+                    instance.tags.forEach { instanceTag ->
                         TagsTable.insert {
                             it[tag] = "${instanceTag.first}=${instanceTag.second}"
                             it[instanceId] = instance.instanceId
@@ -83,25 +82,25 @@ object DbUtils {
                         it[region] = instance.region
                         it[target] = instance.target
                     }
-                    for (nifId in instance.networkInterfaceIds) {
+                    instance.networkInterfaceIds.forEach { nifId ->
                         NetworkInterfacesTable.insert {
                             it[nif] = nifId
                             it[instanceId] = instance.instanceId
                         }
                     }
-                    for (ipAddress in instance.privateIps) {
+                    instance.privateIps.forEach { ipAddress ->
                         PrivateIpTable.update {
                             it[ip] = ipAddress
                             it[instanceId] = instance.instanceId
                         }
                     }
-                    for (ipAddress in instance.publicIps) {
+                    instance.publicIps.forEach { ipAddress ->
                         PublicIpTable.update {
                             it[ip] = ipAddress
                             it[instanceId] = instance.instanceId
                         }
                     }
-                    for (instanceTag in instance.tags) {
+                    instance.tags.forEach { instanceTag ->
                         TagsTable.update {
                             it[tag] = "${instanceTag.first}=${instanceTag.second}"
                             it[instanceId] = instance.instanceId

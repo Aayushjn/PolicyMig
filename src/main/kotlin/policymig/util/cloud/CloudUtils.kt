@@ -21,6 +21,10 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.security.GeneralSecurityException
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.temporal.TemporalUnit
 
 /**
  * Creates a [com.google.api.services.compute.Compute] instance from given credentials
@@ -40,10 +44,10 @@ fun createComputeService(credentialsFile: String): Compute {
         credentials = credentials.createScoped(listOf("https://www.googleapis.com/auth/cloud-platform"))
     }
     return Compute.Builder(
-            GoogleNetHttpTransport.newTrustedTransport(),
-            JacksonFactory.getDefaultInstance(),
-            credentials
-        )
+        GoogleNetHttpTransport.newTrustedTransport(),
+        JacksonFactory.getDefaultInstance(),
+        credentials
+    )
         .setApplicationName("PolicyMig")
         .build()
 }
@@ -93,17 +97,15 @@ fun fetchInstancesFromGcp(project: String, computeService: Compute): List<Instan
             cloudInstance.metadata.items?.forEach { item ->
                 instanceTags += item.key to item.value
             }
-            instances.add(
-                instance {
-                    instanceId = cloudInstance.id.toString()
-                    accountId = project
-                    region = cloudInstance.zone.split("/").last()
-                    target = "gcp"
-                    privateIps = internalIps
-                    publicIps = natIps
-                    tags = instanceTags
-                }
-            )
+            instances += instance {
+                instanceId = cloudInstance.id.toString()
+                accountId = project
+                region = cloudInstance.zone.split("/").last()
+                target = "gcp"
+                privateIps = internalIps
+                publicIps = natIps
+                tags = instanceTags
+            }
         }
     }
     return instances
@@ -147,8 +149,8 @@ fun fetchEc2Instances(): List<Instance> {
                 request = DescribeInstancesRequest.builder().nextToken(nextToken).build()
                 response = ec2.describeInstances(request)
 
-                for (reservation in response.reservations()) {
-                    for (ec2Instance in reservation.instances()) {
+                response.reservations().forEach { reservation ->
+                    reservation.instances().forEach { ec2Instance ->
                         internalIps.clear()
                         natIps.clear()
                         instanceTags.clear()
@@ -162,18 +164,16 @@ fun fetchEc2Instances(): List<Instance> {
                         }
                         ec2Instance.tags().forEach { instanceTags += it.key() to it.value() }
 
-                        instances.add(
-                            instance {
-                                instanceId = ec2Instance.instanceId()
-                                accountId = profileCredentials.resolveCredentials().accessKeyId()
-                                region = awsRegion
-                                target = "aws"
-                                networkInterfaceIds = nifIds
-                                privateIps = internalIps
-                                publicIps = natIps
-                                tags = instanceTags
-                            }
-                        )
+                        instances += instance {
+                            instanceId = ec2Instance.instanceId()
+                            accountId = profileCredentials.resolveCredentials().accessKeyId()
+                            region = awsRegion
+                            target = "aws"
+                            networkInterfaceIds = nifIds
+                            privateIps = internalIps
+                            publicIps = natIps
+                            tags = instanceTags
+                        }
                     }
                 }
                 nextToken = response.nextToken()
@@ -189,7 +189,53 @@ fun fetchEc2Instances(): List<Instance> {
     return instances
 }
 
-fun attachSecurityGroups(networkInterfaceId: String, securityGroupId: String) {
+fun fetchSecurityGroupIds(): List<String> {
+    val profileCredentials: DefaultCredentialsProvider = DefaultCredentialsProvider.create()
+
+    val securityGroupIds: MutableList<String> = mutableListOf()
+    var ec2: Ec2Client
+    var nextToken: String?
+    var request: DescribeSecurityGroupsRequest
+    var response: DescribeSecurityGroupsResponse
+
+    AWS_REGIONS.forEach { awsRegion ->
+        try {
+            ec2 = Ec2Client.builder()
+                .credentialsProvider(profileCredentials)
+                .region(Region.of(awsRegion))
+                .build()
+
+            nextToken = null
+            do {
+                request = DescribeSecurityGroupsRequest.builder()
+                    .nextToken(nextToken)
+                    .build()
+                response = ec2.describeSecurityGroups(request)
+
+                response.securityGroups().forEach { securityGroup ->
+                    val createdAt: LocalDateTime = securityGroup.tags()
+                        .filter { it.key() == "createdAt" }
+                        .map { LocalDateTime.parse(it.value()) }
+                        .first()
+                    val now: LocalDateTime = LocalDateTime.now()
+                    if (now.minusMinutes(5) <= createdAt && createdAt <= now) {
+                        securityGroupIds += securityGroup.groupId()
+                    }
+                }
+                nextToken = response.nextToken()
+            } while (nextToken != null)
+        } catch (e: Ec2Exception) {
+            // Occurs if a region that has not been enabled is accessed (gov, cn, etc)
+            logWarning("CloudUtils") { "$awsRegion: ${e.message}" }
+        } catch (e: SdkClientException) {
+            // Normally occurs when accessing global regions
+            logWarning("CloudUtils") { "$awsRegion: ${e.message}" }
+        }
+    }
+    return securityGroupIds
+}
+
+fun attachSecurityGroups(networkInterfaceId: String, securityGroupId: List<String>) {
     val profileCredentials: DefaultCredentialsProvider = DefaultCredentialsProvider.create()
     val ec2: Ec2Client = Ec2Client.builder().credentialsProvider(profileCredentials).build()
 

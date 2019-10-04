@@ -167,10 +167,9 @@ class Translate: CliktCommand(
         val translatedPolicies: MutableList<Policy> = mutableListOf()
         val outputFile = "translated_policies$FILE_EXTENSION"
 
+        println("Only policies that \"allow\" rules and target \"tcp\", \"udp\" or \"icmp\" protocols are retained!")
         showLoading("Translating", "Saved to $outputFile") {
-            policies.forEach { policy ->
-                translatedPolicies.add(policy.translatePolicy(target, region, network))
-            }
+            policies.forEach { policy -> translatedPolicies.add(policy.translatePolicy(target, region, network)) }
         }
         translatedPolicies.writeToPcl(outputFile)
     }
@@ -281,32 +280,28 @@ fun main(args: Array<String>) = PolicyMigrate()
     .main(args)
 
 //fun main() {
-//    selectAllAwsInstances().forEach { println(it) }
-//    fetchTagAsIp("gcp", "app" to "policy-mig").forEach { println(it) }
-//
-////    val policy = policy {
-////        name = "test-policy"
-////        description = "Testing policy"
-////        target = "aws"
-////        region = "us-west-2"
-////        direction = "EGRESS"
-//////        sourceIps = listOf("192.168.2.0/16", "10.53.25.192/24")
-////        targetIps = listOf("0.0.0.0/0")
-////        rules {
-////            rule {
-////                ports = listOf("8080", "5500-5600")
-////                action = "allow"
-////                protocol = "tcp"
-////            }
-////            rule {
-////                ports = listOf("0")
-////                action = "allow"
-////                protocol = "all"
-////            }
-////        }
-////    }
-////    println(policy)
-////    createAwsSecurityGroupBlock(policy)
+//    val policy = policy {
+//        name = "test-policy"
+//        description = "Testing policy"
+//        target = "aws"
+//        region = "us-west-2"
+//        direction = "EGRESS"
+////        sourceIps = listOf("192.168.2.0/16", "10.53.25.192/24")
+//        targetIps = listOf("0.0.0.0/0")
+//        rules {
+//            rule {
+//                ports = listOf("8080", "5500-5600")
+//                action = "allow"
+//                protocol = "tcp"
+//            }
+//            rule {
+//                ports = listOf("0")
+//                action = "allow"
+//                protocol = "all"
+//            }
+//        }
+//    }
+//    createAwsSecurityGroupBlock(policy)
 ////
 ////    println(runCommand("terraform init", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/"))
 ////    println(runCommand("terraform plan -out plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/"))

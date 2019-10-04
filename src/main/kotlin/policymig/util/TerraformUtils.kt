@@ -7,6 +7,8 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
 
 const val DIRECTORY: String = "terraform-resources"
@@ -50,7 +52,8 @@ private val AWS_PROVIDER_BLOCK: MutableList<String> = mutableListOf(
 private val SECURITY_GROUP_BLOCK: MutableList<String> = mutableListOf(
     "\" {\n\tname = \"",
     "\"\n\tdescription = \"",
-    "\"",
+    "\"\n\ttags = {\n\t\tcreatedAt = \"",
+    "\"\n\t}",
     "\n}\n\n"
 )
 
@@ -160,7 +163,6 @@ fun createGcpFirewallBlock(policy: Policy) {
                             rule.ports.joinToString { port -> "\"$port\"" } +
                             "]")
                 }
-
                 add(size - 1, template.joinToString(""))
             }
 
@@ -261,6 +263,7 @@ fun createAwsSecurityGroupBlock(policy: Policy) {
                         }
                         add(size - 1, template.joinToString(""))
                     }
+                    add(6, LocalDateTime.now().toString())
                 }
 
                 with(File(this.toString(), "firewalls.tf")) {

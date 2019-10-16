@@ -3,7 +3,7 @@ package policymig.util.db
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import policymig.db.*
-import policymig.util.logInfo
+import policymig.util.misc.logInfo
 
 internal const val DB_NAME: String = "policy_mig"
 internal const val DB_USER: String = "root"

@@ -38,6 +38,9 @@ dependencies {
     // Google Cloud APIs
     implementation 'com.google.apis:google-api-services-compute:v1-rev214-1.25.0'
 
+    // JSON parser
+    implementation 'com.google.code.gson:gson:2.8.6'
+
     // AWS cloud APIs
     implementation platform('software.amazon.awssdk:bom:2.5.29')
     implementation 'software.amazon.awssdk:ec2'

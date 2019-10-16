@@ -18,9 +18,9 @@ import policymig.util.cloud.createComputeService
 import policymig.util.cloud.fetchEc2Instances
 import policymig.util.cloud.fetchInstancesFromGcp
 import policymig.util.db.DbUtils
-import policymig.util.io.readFromPcl
-import policymig.util.io.writeToPcl
-import policymig.util.misc.showLoading
+import policymig.util.io.readFromFile
+import policymig.util.io.writeToFile
+import policymig.util.misc.*
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -74,7 +74,7 @@ class Apply: CliktCommand(
     private val project: String? by option("-p", "--project", help = "name of project (unique id on GCP)")
 
     override fun run() {
-        val policies = readFromPcl(file.toString())
+        val policies = readFromFile(file.toString())
         when(policies.cloudTargetCount()) {
             1 -> if (policies[0].target == "gcp") {
                 requireNotNull(project)
@@ -163,15 +163,15 @@ class Translate: CliktCommand(
             }
         }
 
-        val policies = readFromPcl(file.toString())
+        val policies = readFromFile(file.toString())
         val translatedPolicies: MutableList<Policy> = mutableListOf()
-        val outputFile = "translated_policies$FILE_EXTENSION"
+        val outputFile = "policies/translated_policies$FILE_EXTENSION"
 
         println("Only policies that \"allow\" rules and target \"tcp\", \"udp\" or \"icmp\" protocols are retained!")
         showLoading("Translating", "Saved to $outputFile") {
             policies.forEach { policy -> translatedPolicies.add(policy.translatePolicy(target, region, network)) }
         }
-        translatedPolicies.writeToPcl(outputFile)
+        translatedPolicies.writeToFile(outputFile)
     }
 }
 
@@ -280,6 +280,11 @@ fun main(args: Array<String>) = PolicyMigrate()
     .main(args)
 
 //fun main() {
+//    val policy: Policy = jsonReader.fromJson(
+//        BufferedReader(FileReader("policies/sample_policy.json")),
+//        object : TypeToken<Policy>() {}.type
+//    )
+//    println(policy)
 //    val policy = policy {
 //        name = "test-policy"
 //        description = "Testing policy"
@@ -287,7 +292,7 @@ fun main(args: Array<String>) = PolicyMigrate()
 //        region = "us-west-2"
 //        direction = "EGRESS"
 ////        sourceIps = listOf("192.168.2.0/16", "10.53.25.192/24")
-//        targetIps = listOf("0.0.0.0/0")
+//        targetTags = listOf("app" to "App", "name" to "Name")
 //        rules {
 //            rule {
 //                ports = listOf("8080", "5500-5600")
@@ -301,9 +306,11 @@ fun main(args: Array<String>) = PolicyMigrate()
 //            }
 //        }
 //    }
+//
+//    println(jsonWriter.toJson(policy))
 //    createAwsSecurityGroupBlock(policy)
-////
-////    println(runCommand("terraform init", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/"))
-////    println(runCommand("terraform plan -out plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/"))
-////    println(runCommand("terraform apply plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/", 180))
+//
+//    println(runCommand("terraform init", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/"))
+//    println(runCommand("terraform plan -out plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/"))
+//    println(runCommand("terraform apply plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/", 180))
 //}

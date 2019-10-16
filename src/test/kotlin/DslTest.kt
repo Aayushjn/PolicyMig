@@ -2,14 +2,17 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import policymig.model.Policy
 import policymig.util.FILE_EXTENSION
 import policymig.util.dsl.policy
+import policymig.util.io.readFromFile
+import policymig.util.io.writeToFile
 import java.io.File
 
 class DslTest {
     companion object {
         @BeforeAll @JvmStatic
-        fun clearPclFile() = File("sample_policy$FILE_EXTENSION").writeText("")
+        fun clearTestFile() = File("policies/test_policy$FILE_EXTENSION").writeText("")
     }
 
     @Test
@@ -61,43 +64,36 @@ class DslTest {
         assertEquals(translatedPolicy, policy.translatePolicy("aws", region = "us-west-2"))
     }
 
-    /*
-        TODO: Test for file read-writes
-        @author: aayush
-        @date: 30/09/19
-        @time: 7:18 PM
-     */
+    @Test
+    fun verifyFileReadWrite() {
+        val policy = policy {
+            name = "test-policy"
+            description = "Testing policy"
+            target = "gcp"
+            network = "default"
+            direction = "INGRESS"
+//            sourceIps = listOf("192.168.2.0/16", "10.53.25.192/24")
+            sourceTags = listOf("app" to "PolicyMig", "role" to "test-env", "dev" to "Kt-1.3.50")
+//            targetIps = listOf("0.0.0.0/0")
+            rules {
+                rule {
+                    ports = listOf("8080", "5500-5600")
+                    action = "allow"
+                    protocol = "sctp"
+                }
+                rule {
+                    ports = listOf("3000")
+                    action = "deny"
+                    protocol = "udp"
+                }
+            }
+        }
 
-//    @Test
-//    fun verifyFileReadWrite() {
-//        val policy = policy {
-//            name = "test-policy"
-//            description = "Testing policy"
-//            target = "gcp"
-//            network = "default"
-//            direction = "INGRESS"
-////            sourceIps = listOf("192.168.2.0/16", "10.53.25.192/24")
-//            sourceTags = listOf("app" to "PolicyMig", "role" to "test-env", "dev" to "Kt-1.3.50")
-////            targetIps = listOf("0.0.0.0/0")
-//            rules {
-//                rule {
-//                    ports = listOf("8080", "5500-5600")
-//                    action = "allow"
-//                    protocol = "sctp"
-//                }
-//                rule {
-//                    ports = listOf("3000")
-//                    action = "deny"
-//                    protocol = "udp"
-//                }
-//            }
-//        }
-//
-//        val policies: MutableList<Policy> = mutableListOf(policy, policy.translatePolicy("aws", region="us-west-2"))
-//        policies.writeToPcl("sample_policy$FILE_EXTENSION")
-//
-//        assertEquals(policies, readFromPcl("sample_policy$FILE_EXTENSION"))
-//    }
+        val policies: MutableList<Policy> = mutableListOf(policy, policy.translatePolicy("aws", region="us-west-2"))
+        policies.writeToFile("sample_policy$FILE_EXTENSION")
+
+        assertEquals(policies, readFromFile("sample_policy$FILE_EXTENSION"))
+    }
 
     @Test
     fun handleInvalidPolicies() {

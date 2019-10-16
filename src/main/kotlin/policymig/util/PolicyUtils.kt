@@ -19,5 +19,5 @@ val DIRECTIONS: Array<String> = arrayOf("INGRESS", "EGRESS")
 val ACTIONS: Array<String> = arrayOf("allow", "deny")
 val PROTOCOLS: Array<String> = arrayOf("tcp", "udp", "icmp", "esp", "ah", "sctp", "all")
 
-const val FILE_EXTENSION: String = ".pcl"
+const val FILE_EXTENSION: String = ".json"
 const val FILE_ERROR: String = "Only $FILE_EXTENSION file type is supported!"

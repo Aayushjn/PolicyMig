@@ -3,12 +3,13 @@ package policymig.util
 
 import policymig.model.Policy
 import policymig.util.db.DbUtils
+import policymig.util.misc.logError
+import policymig.util.misc.logInfo
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
 
 const val DIRECTORY: String = "terraform-resources"

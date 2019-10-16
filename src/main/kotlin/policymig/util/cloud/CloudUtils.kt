@@ -10,7 +10,7 @@ import com.google.api.services.compute.model.InstancesScopedList
 import policymig.db.Instance
 import policymig.db.instance
 import policymig.util.AWS_REGIONS
-import policymig.util.logWarning
+import policymig.util.misc.logWarning
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.core.exception.SdkClientException
 import software.amazon.awssdk.regions.Region
@@ -21,10 +21,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.security.GeneralSecurityException
-import java.time.Instant
 import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.temporal.TemporalUnit
 
 /**
  * Creates a [com.google.api.services.compute.Compute] instance from given credentials

@@ -1,5 +1,5 @@
 @file:JvmName("LogUtils")
-package policymig.util
+package policymig.util.misc
 
 import org.slf4j.LoggerFactory
 import java.io.PrintWriter

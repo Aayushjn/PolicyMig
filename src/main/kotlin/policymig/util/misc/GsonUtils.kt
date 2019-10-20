@@ -1,3 +1,4 @@
+@file:JvmName("GsonUtils")
 package policymig.util.misc
 
 import com.google.gson.*
@@ -8,17 +9,17 @@ import policymig.util.dsl.policy
 import java.lang.reflect.Type
 
 /**
- * [com.google.gson.Gson] object for reading JSON files
+ * [com.google.gson.Gson] object for writing JSON files
  */
-val jsonReader: Gson = GsonBuilder()
+val jsonWriter: Gson = GsonBuilder()
     .registerTypeAdapter(Pair::class.java, PairSerializer())
     .setPrettyPrinting()
     .create()
 
 /**
- * [com.google.gson.Gson] object for writing JSON files
+ * [com.google.gson.Gson] object for reading JSON files
  */
-val jsonWriter: Gson = GsonBuilder()
+val jsonReader: Gson = GsonBuilder()
     .registerTypeAdapter(Pair::class.java, PairDeserializer())
     .registerTypeAdapter(Rule::class.java, RuleDeserializer())
     .registerTypeAdapter(Policy::class.java, PolicyDeserializer())

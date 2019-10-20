@@ -1,6 +1,9 @@
 @file:JvmName("PolicyUtils")
 package policymig.util
 
+import policymig.model.Policy
+import policymig.util.dsl.policy
+
 val TARGETS: Array<String> = arrayOf("aws", "gcp")
 
 val AWS_REGIONS: Array<String> = arrayOf(
@@ -21,3 +24,65 @@ val PROTOCOLS: Array<String> = arrayOf("tcp", "udp", "icmp", "esp", "ah", "sctp"
 
 const val FILE_EXTENSION: String = ".json"
 const val FILE_ERROR: String = "Only $FILE_EXTENSION file type is supported!"
+
+/**
+ * Creates a sample policy
+ * @param _target target environment must be one of [policymig.util.TARGETS]
+ * @param _direction inbound/outbound (must be one of [policymig.util.DIRECTIONS])
+ * @return instance of [policymig.model.Policy]
+ */
+internal fun getSamplePolicy(_target: String, _direction: String): Policy {
+    require(_target in TARGETS) { "Target must be one of ${TARGETS.contentDeepToString()}" }
+    require(_direction.toUpperCase() in DIRECTIONS) { "Invalid direction specified! Must be one of $DIRECTIONS" }
+
+    val _region = if (_target == "aws") "us-west-2" else null
+    val _network = if (_target == "aws") null else "default"
+
+    return if (_direction == "INGRESS") {
+        policy {
+            name = "test-policy"
+            description = "Testing policy"
+            direction = _direction
+            target = _target
+            region = _region
+            network = _network
+            sourceIps = listOf("192.168.2.0/16", "10.53.25.192/24")
+            sourceTags = listOf("app" to "App", "name" to "Name")
+            rules {
+                rule {
+                    ports = listOf("8080", "5500-5600")
+                    action = "allow"
+                    protocol = "tcp"
+                }
+                rule {
+                    ports = listOf("0")
+                    action = "allow"
+                    protocol = "all"
+                }
+            }
+        }
+    } else {
+        policy {
+            name = "test-policy"
+            description = "Testing policy"
+            direction = _direction
+            target = _target
+            region = _region
+            network = _network
+            targetIps = listOf("192.168.2.0/16", "10.53.25.192/24")
+            targetTags = listOf("app" to "App", "name" to "Name")
+            rules {
+                rule {
+                    ports = listOf("8080", "5500-5600")
+                    action = "allow"
+                    protocol = "tcp"
+                }
+                rule {
+                    ports = listOf("0")
+                    action = "allow"
+                    protocol = "all"
+                }
+            }
+        }
+    }
+}

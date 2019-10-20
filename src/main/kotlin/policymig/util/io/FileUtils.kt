@@ -7,9 +7,7 @@ import policymig.util.FILE_ERROR
 import policymig.util.FILE_EXTENSION
 import policymig.util.misc.jsonReader
 import policymig.util.misc.jsonWriter
-import java.io.File
-import java.io.FileReader
-import java.io.FileWriter
+import java.io.*
 
 /**
  * Writes policies to a file
@@ -21,7 +19,8 @@ fun List<Policy>.writeToFile(filename: String) {
 
     val policies = readFromFile(filename)
     policies.addAll(this)
-    FileWriter(filename).use { jsonReader.toJson(policies, it) }
+
+    BufferedWriter(FileWriter(filename)).use { jsonWriter.toJson(policies, it) }
 }
 
 /**
@@ -38,5 +37,5 @@ fun readFromFile(filename: String): MutableList<Policy> {
         return mutableListOf()
     }
 
-    return FileReader(filename).use { jsonWriter.fromJson(it, object : TypeToken<MutableList<Policy>>() {}.type) }
+    return BufferedReader(FileReader(filename)).use { jsonReader.fromJson(it, object : TypeToken<MutableList<Policy>>() {}.type) }
 }

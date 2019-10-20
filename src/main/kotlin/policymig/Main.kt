@@ -10,6 +10,7 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.path
+import com.google.gson.reflect.TypeToken
 import policymig.db.Instance
 import policymig.model.Policy
 import policymig.model.cloudTargetCount
@@ -21,7 +22,9 @@ import policymig.util.db.DbUtils
 import policymig.util.io.readFromFile
 import policymig.util.io.writeToFile
 import policymig.util.misc.*
+import java.io.BufferedReader
 import java.io.File
+import java.io.FileReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -280,34 +283,8 @@ fun main(args: Array<String>) = PolicyMigrate()
     .main(args)
 
 //fun main() {
-//    val policy: Policy = jsonReader.fromJson(
-//        BufferedReader(FileReader("policies/sample_policy.json")),
-//        object : TypeToken<Policy>() {}.type
-//    )
-//    println(policy)
-//    val policy = policy {
-//        name = "test-policy"
-//        description = "Testing policy"
-//        target = "aws"
-//        region = "us-west-2"
-//        direction = "EGRESS"
-////        sourceIps = listOf("192.168.2.0/16", "10.53.25.192/24")
-//        targetTags = listOf("app" to "App", "name" to "Name")
-//        rules {
-//            rule {
-//                ports = listOf("8080", "5500-5600")
-//                action = "allow"
-//                protocol = "tcp"
-//            }
-//            rule {
-//                ports = listOf("0")
-//                action = "allow"
-//                protocol = "all"
-//            }
-//        }
-//    }
+//    val policy = getSamplePolicy("aws", "INGRESS")
 //
-//    println(jsonWriter.toJson(policy))
 //    createAwsSecurityGroupBlock(policy)
 //
 //    println(runCommand("terraform init", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/"))

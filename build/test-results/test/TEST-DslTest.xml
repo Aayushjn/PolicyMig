@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="DslTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2019-10-16T13:41:19" hostname="VX-15" time="0.091">
+  <properties/>
+  <testcase name="handleInvalidPolicies()" classname="DslTest" time="0.038"/>
+  <testcase name="verifyFileReadWrite()" classname="DslTest" time="0.05"/>
+  <testcase name="verifyPolicyTranslation()" classname="DslTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

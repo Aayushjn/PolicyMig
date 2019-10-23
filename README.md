@@ -3,38 +3,51 @@
 PolicyMig automates network security policy translation across cloud-based environments. Currently, it supports AWS and 
 GCP cloud environments for security policy migration.
 
-It also defines a configuration language, termed Policy Configuration Language (.pcl), which dictates the syntax for 
-defining security policies across cloud targets.
+Policies are defined in JSON format which dictates the syntax for defining security policies across cloud targets.
 
 ___
-### Policy Configuration Language
-Each policy (.pcl file) has the following format:
-```
-policy {
-    name = "policy-name"
-    description = "Brief description"
-    target = "aws"
-    direction = "INGRESS"
-//    network = "app-subnet"
-    region = "us-east-2"
-    sourceIps = ["10.10.35.48/16", "35.101.45.0/24"]
-    sourceTags = ["app=App", "role=db", "env=MySQL", "ver=8.5"]
-//    targetIps = ["0.0.0.0/0"]
-//    targetTags = ["role=conf"]
-    rules {
-        rule {
-            action = "allow"
-            protocol = "tcp"
-            ports = ["80", "443", "22"]
-        }
-        rule {
-            action = "deny"
-            protocol = "udp"
-            ports = ["5500-5600"]
-        }
+### Policy Configuration
+Each policy (.json file) has the following format:
+```json
+[
+    {
+        "name": "policy-name",
+        "description": "Brief description",
+        "target": "aws",
+        "direction": "INGRESS",
+        "region": "us-east-2",
+        "sourceIps": [
+            "10.10.35.48/16",
+            "35.101.45.0/24"
+        ],
+        "sourceTags": [
+            {"app": "App"},
+            {"role": "db"},
+            {"env": "MySQL"},
+            {"ver": "8.5"}
+        ],
+        "rules": [
+            {
+                "action": "allow",
+                "protocol": "tcp",
+                "ports": [
+                    "80",
+                    "443",
+                    "22"
+                ]
+            },
+            {
+                "action": "allow",
+                "protocol": "udp",
+                "ports": [
+                    "5500-5600"
+                ]
+            }
+        ]
     }
-}
+]
 ```
+All policies must follow JSON array style.
 
 The _name_ may contain only **alphanumerics and hyphens**.<br>
 The _target_ may be either **aws** or **gcp**.<br>
@@ -55,17 +68,31 @@ for GCP, while **sctp**, **esp** and **ah** are invalid for AWS.<br>
 _ports_ may be a range or a list of singular port numbers.
 
 ___
+### Build & Run
+Clone this repo using the following command:<br>
+`git clone https://github.com/Aayushjn/PolicyMig.git`
+
+Import the project as a Gradle project and build using IDE or run:<br>
+`./gradlew build`
+
+Finally, to execute the output JAR file, run:<br>
+```shell script
+chmod +x cloud-mig.jar
+java -jar cloud-mig.jar <command> <options> <arguments>
+```
+___
 ### Checklist
 - [x] Policy translation
-- [ ] Policy DSL
+- [x] Policy DSL
     - [x] Write to file
-    - [ ] Read from file
+    - [x] Read from file
 - [x] Terraform configuration generation
     - [x] GCP
     - [x] AWS
 - [x] Cloud discovery
     - [x] GCP
     - [x] AWS
-- [ ] Policy creation
+- [x] Policy creation
     - [x] GCP
-    - [ ] AWS
+    - [x] AWS
+

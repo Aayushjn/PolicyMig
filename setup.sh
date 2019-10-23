@@ -5,6 +5,19 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
+# Install dependencies
+sudo apt-get update
+if [[ $(java -version 2>&1 | grep -c "not found") == 0 ]]; then
+  sudo apt-get install -y default-jdk
+fi
+if [[ $(mysql -V 2>&1 | grep -c "not found") == 0 ]]; then
+  sudo apt-get install -y mysql-server
+  sudo mysql_secure_installation -D
+fi
+if [[ $(kotlin -version 2>&1 | grep -c "not found") == 0 ]]; then
+  sudo snap install --classic kotlin
+fi
+
 # Terraform install
 TERRAFORM_VERSION="0.12.9"
 installed_version=$(terraform -v | head -n 1 | awk {'print $2'} | sed 's/v//g')

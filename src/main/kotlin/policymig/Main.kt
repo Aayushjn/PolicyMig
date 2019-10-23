@@ -10,7 +10,6 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.path
-import com.google.gson.reflect.TypeToken
 import policymig.db.Instance
 import policymig.model.Policy
 import policymig.model.cloudTargetCount
@@ -22,9 +21,7 @@ import policymig.util.db.DbUtils
 import policymig.util.io.readFromFile
 import policymig.util.io.writeToFile
 import policymig.util.misc.*
-import java.io.BufferedReader
 import java.io.File
-import java.io.FileReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -50,7 +47,7 @@ class PolicyMigrate: CliktCommand(
  *
  * Usage:
  * ```
- * policy-mig apply -f [file].pcl
+ * policy-mig apply -f [file].json
  * ```
  */
 class Apply: CliktCommand(
@@ -61,7 +58,7 @@ class Apply: CliktCommand(
         .path(exists = true, folderOkay = false, readable = true)
         .required()
         .validate {
-            if (!it.toString().endsWith(".pcl")) {
+            if (!it.toString().endsWith(".json")) {
                 fail("Only $FILE_EXTENSION file type is supported!")
             }
         }
@@ -122,8 +119,8 @@ class Apply: CliktCommand(
  *
  * Usage:
  * ```
- * policy-mig translate -t aws -r [region] -f [file].pcl
- * policy-mig translate -t gcp -n [network] -f [file].pcl
+ * policy-mig translate -t aws -r [region] -f [file].json
+ * policy-mig translate -t gcp -n [network] -f [file].json
  * ```
  */
 class Translate: CliktCommand(
@@ -134,7 +131,7 @@ class Translate: CliktCommand(
         .path(exists = true, folderOkay = false, readable = true)
         .required()
         .validate {
-            if (!it.toString().endsWith(".pcl")) {
+            if (!it.toString().endsWith(".json")) {
                 fail("Only $FILE_EXTENSION file type is supported!")
             }
         }

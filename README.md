@@ -77,6 +77,7 @@ Import the project as a Gradle project and build using IDE or run:<br>
 
 Finally, to execute the output JAR file, run:<br>
 ```shell script
+sudo ./setup.sh
 chmod +x cloud-mig.jar
 java -jar cloud-mig.jar <command> <options> <arguments>
 ```

@@ -9,10 +9,14 @@ import policymig.util.io.readFromFile
 import policymig.util.io.writeToFile
 import java.io.File
 
+
+const val fileName = "test_policy"
+
 class DslTest {
+
     companion object {
         @BeforeAll @JvmStatic
-        fun clearTestFile() = File("policies/test_policy$FILE_EXTENSION").writeText("")
+        fun clearTestFile() = File("policies/$fileName$FILE_EXTENSION").writeText("")
     }
 
     @Test
@@ -90,9 +94,9 @@ class DslTest {
         }
 
         val policies: MutableList<Policy> = mutableListOf(policy, policy.translatePolicy("aws", region="us-west-2"))
-        policies.writeToFile("sample_policy$FILE_EXTENSION")
+        policies.writeToFile(fileName + FILE_EXTENSION)
 
-        assertEquals(policies, readFromFile("sample_policy$FILE_EXTENSION"))
+        assertEquals(policies, readFromFile(fileName + FILE_EXTENSION))
     }
 
     @Test

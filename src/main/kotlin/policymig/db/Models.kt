@@ -8,7 +8,6 @@ package policymig.db
  * @property accountId unique id of the account that it belongs to (helps differentiate AWS/GCP instances)
  * @property region region that the instance is located in
  * @property privateIps list of internal IPs
- * @property publicIps list of NAT IPs
  * @property tags map of key=value pairs used to "mark" certain instances
  */
 data class Instance(
@@ -18,7 +17,6 @@ data class Instance(
     var target: String,
     var networkInterfaceIds: List<String>,
     var privateIps: List<String>,
-    var publicIps: List<String>,
     var tags: List<Pair<String, String>>
 )
 
@@ -33,7 +31,6 @@ annotation class InstanceDsl
  * @property accountId unique id of the account that it belongs to (helps differentiate AWS/GCP instances)
  * @property region region that the instance is located in
  * @property privateIps list of internal IPs
- * @property publicIps list of NAT IPs
  * @property tags map of key=value pairs used to "mark" certain instances
  */
 @InstanceDsl
@@ -44,7 +41,6 @@ class InstanceBuilder {
     var target: String = ""
     var networkInterfaceIds: List<String> = listOf()
     var privateIps: List<String> = listOf()
-    var publicIps: List<String> = listOf()
     var tags: List<Pair<String, String>> = listOf()
 
     /**
@@ -52,7 +48,7 @@ class InstanceBuilder {
      *
      * @return [policymig.db.Instance]
      */
-    internal fun build(): Instance = Instance(instanceId, accountId, region, target, networkInterfaceIds, privateIps, publicIps, tags)
+    internal fun build(): Instance = Instance(instanceId, accountId, region, target, networkInterfaceIds, privateIps, tags)
 }
 
 /**

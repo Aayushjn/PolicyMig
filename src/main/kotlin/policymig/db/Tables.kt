@@ -34,17 +34,6 @@ object PrivateIpTable: Table("private_ips") {
 }
 
 /**
- * SQL table to store public IPs
- *
- * @property ip public IP address
- * @property instanceId foreign key to [policymig.db.InstanceTable.instanceId]
- */
-object PublicIpTable: Table("public_ips") {
-    val ip: Column<String> = varchar("ip", 19).primaryKey().check("IP") { it.regexp(IP_REGEX.toString()) }
-    val instanceId: Column<String> = reference("instance_id", InstanceTable.instanceId, onDelete = CASCADE)
-}
-
-/**
  * SQL table to store VM tags
  *
  * @property id Unique id for each tag

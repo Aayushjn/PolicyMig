@@ -47,7 +47,7 @@ Each policy (.json file) has the following format:
     }
 ]
 ```
-All policies must follow JSON array style.
+All policies must follow **JSON array** style.
 
 The _name_ may contain only **alphanumerics and hyphens**.<br>
 The _target_ may be either **aws** or **gcp**.<br>

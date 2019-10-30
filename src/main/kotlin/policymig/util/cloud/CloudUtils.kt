@@ -76,20 +76,19 @@ fun fetchInstancesFromGcp(project: String, computeService: Compute): List<Instan
 
     val instances: MutableList<Instance> = mutableListOf()
     val internalIps: MutableList<String> = mutableListOf()
-    val natIps: MutableList<String> = mutableListOf()
     val instanceTags: MutableList<Pair<String, String>> = mutableListOf()
 
     cloudInstancesMap.forEach {
         internalIps.clear()
-        natIps.clear()
         instanceTags.clear()
 
         it.value.instances.forEach { cloudInstance ->
             cloudInstance.networkInterfaces.forEach { nif ->
-                internalIps += nif.networkIP
-                nif.accessConfigs.forEach { accessConfig ->
-                    natIps += accessConfig.natIP
-                }
+                val ip = nif.networkIP.split(".").toMutableList().apply {
+                    this[2] = "0"
+                    this[3] = "0"
+                }.joinToString(separator = ".", postfix = "/24")
+                internalIps += ip
             }
             cloudInstance.metadata.items?.forEach { item ->
                 instanceTags += item.key to item.value
@@ -100,7 +99,6 @@ fun fetchInstancesFromGcp(project: String, computeService: Compute): List<Instan
                 region = cloudInstance.zone.split("/").last()
                 target = "gcp"
                 privateIps = internalIps
-                publicIps = natIps
                 tags = instanceTags
             }
         }
@@ -127,7 +125,6 @@ fun fetchEc2Instances(): List<Instance> {
     val instances: MutableList<Instance> = mutableListOf()
     val nifIds: MutableList<String> = mutableListOf()
     val internalIps: MutableList<String> = mutableListOf()
-    val natIps: MutableList<String> = mutableListOf()
     val instanceTags: MutableList<Pair<String, String>> = mutableListOf()
     var ec2: Ec2Client
     var nextToken: String?
@@ -149,15 +146,17 @@ fun fetchEc2Instances(): List<Instance> {
                 response.reservations().forEach { reservation ->
                     reservation.instances().forEach { ec2Instance ->
                         internalIps.clear()
-                        natIps.clear()
                         instanceTags.clear()
 
                         ec2Instance.networkInterfaces().forEach { nif ->
                             nifIds += nif.networkInterfaceId()
                             nif.privateIpAddresses().forEach {
-                                internalIps += it.privateIpAddress()
+                                val ip = it.privateIpAddress().split(".").toMutableList().apply {
+                                    this[2] = "0"
+                                    this[3] = "0"
+                                }.joinToString(separator = ".", postfix = "/24")
+                                internalIps += ip
                             }
-                            natIps += nif.association().publicIp()
                         }
                         ec2Instance.tags().forEach { instanceTags += it.key() to it.value() }
 
@@ -168,7 +167,6 @@ fun fetchEc2Instances(): List<Instance> {
                             target = "aws"
                             networkInterfaceIds = nifIds
                             privateIps = internalIps
-                            publicIps = natIps
                             tags = instanceTags
                         }
                     }

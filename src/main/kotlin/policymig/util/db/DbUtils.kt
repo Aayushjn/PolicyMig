@@ -32,7 +32,7 @@ object DbUtils {
             addLogger(Slf4jSqlDebugLogger)
 
             // Creates tables if they don't already exist
-            SchemaUtils.create(InstanceTable, PrivateIpTable, PublicIpTable, TagsTable, NetworkInterfacesTable)
+            SchemaUtils.create(InstanceTable, PrivateIpTable, TagsTable, NetworkInterfacesTable)
 
             /*
                 TODO: Add deletion support for instances that don't exist on cloud
@@ -89,12 +89,6 @@ object DbUtils {
                             it[instanceId] = instance.instanceId
                         }
                     }
-                    instance.publicIps.forEach { ipAddress ->
-                        PublicIpTable.insert {
-                            it[ip] = ipAddress
-                            it[instanceId] = instance.instanceId
-                        }
-                    }
                     instance.tags.forEach { instanceTag ->
                         TagsTable.insert {
                             it[tag] = "${instanceTag.first}=${instanceTag.second}"
@@ -117,12 +111,6 @@ object DbUtils {
                     }
                     instance.privateIps.forEach { ipAddress ->
                         PrivateIpTable.update {
-                            it[ip] = ipAddress
-                            it[instanceId] = instance.instanceId
-                        }
-                    }
-                    instance.publicIps.forEach { ipAddress ->
-                        PublicIpTable.update {
                             it[ip] = ipAddress
                             it[instanceId] = instance.instanceId
                         }
@@ -170,7 +158,6 @@ object DbUtils {
         val instances: MutableList<Instance> = mutableListOf()
         val nifIds: MutableList<String> = mutableListOf()
         val internalIps: MutableList<String> = mutableListOf()
-        val natIps: MutableList<String> = mutableListOf()
         val instanceTags: MutableList<Pair<String, String>> = mutableListOf()
 
         transaction {
@@ -179,7 +166,6 @@ object DbUtils {
             InstanceTable.select { InstanceTable.target eq "gcp" }.forEach { result ->
                 nifIds.clear()
                 internalIps.clear()
-                natIps.clear()
                 instanceTags.clear()
 
                 NetworkInterfacesTable.select { NetworkInterfacesTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
@@ -187,9 +173,6 @@ object DbUtils {
                 }
                 PrivateIpTable.select { PrivateIpTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
                     internalIps += it[PrivateIpTable.ip]
-                }
-                PublicIpTable.select { PublicIpTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
-                    natIps += it[PublicIpTable.ip]
                 }
                 TagsTable.select { TagsTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
                     val (key: String, value: String) = it[TagsTable.tag].split("=")
@@ -203,7 +186,6 @@ object DbUtils {
                     target = result[InstanceTable.target]
                     networkInterfaceIds = nifIds
                     privateIps = internalIps
-                    publicIps = natIps
                     tags = instanceTags
                 }
             }
@@ -222,7 +204,6 @@ object DbUtils {
         val instances: MutableList<Instance> = mutableListOf()
         val nifIds: MutableList<String> = mutableListOf()
         val internalIps: MutableList<String> = mutableListOf()
-        val natIps: MutableList<String> = mutableListOf()
         val instanceTags: MutableList<Pair<String, String>> = mutableListOf()
 
         transaction {
@@ -231,7 +212,6 @@ object DbUtils {
             InstanceTable.select { InstanceTable.target eq "aws" }.forEach { result ->
                 nifIds.clear()
                 internalIps.clear()
-                natIps.clear()
                 instanceTags.clear()
 
                 NetworkInterfacesTable.select { NetworkInterfacesTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
@@ -239,9 +219,6 @@ object DbUtils {
                 }
                 PrivateIpTable.select { PrivateIpTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
                     internalIps += it[PrivateIpTable.ip]
-                }
-                PublicIpTable.select { PublicIpTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
-                    natIps += it[PublicIpTable.ip]
                 }
                 TagsTable.select { TagsTable.instanceId eq result[InstanceTable.instanceId] }.forEach {
                     val (key: String, value: String) = it[TagsTable.tag].split("=")
@@ -255,7 +232,6 @@ object DbUtils {
                     target = result[InstanceTable.target]
                     networkInterfaceIds = nifIds
                     privateIps = internalIps
-                    publicIps = natIps
                     tags = instanceTags
                 }
             }
@@ -272,7 +248,7 @@ object DbUtils {
         transaction {
             addLogger(Slf4jSqlDebugLogger)
 
-            SchemaUtils.drop(InstanceTable, PrivateIpTable, PublicIpTable, TagsTable)
+            SchemaUtils.drop(PrivateIpTable, TagsTable, NetworkInterfacesTable, InstanceTable)
         }
     }
 }

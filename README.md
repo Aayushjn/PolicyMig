@@ -69,6 +69,16 @@ _ports_ may be a range or a list of singular port numbers.
 
 ___
 ### Build & Run
+Install base dependencies manually by using the following commands:
+```shell script
+sudo apt-get update
+sudo apt install openjdk-11-jdk
+sudo apt-get install mysql-server
+sudo snap install --classic kotlin
+```
+
+Set up MySQL with a database name policy_mig, and a default username and password.
+
 Clone this repo using the following command:<br>
 `git clone https://github.com/Aayushjn/PolicyMig.git`
 

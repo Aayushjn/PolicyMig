@@ -42,33 +42,6 @@ object DbUtils {
                 @date: 30/09/19
                 @time: 6:47 PM
              */
-//            val awsInstances = instances.filter { it.target == "aws" }
-//            val gcpInstances = instances.filter { it.target == "gcp" }
-//            val toDelete: MutableList<String> = mutableListOf()
-//
-//            val awsStored = selectAllAwsInstances()
-//            awsStored.forEach { ins ->
-//                awsInstances.forEach {
-//                    if (it.instanceId == ins.instanceId) {
-//                        toDelete.add(it.instanceId)
-//                    }
-//                }
-//            }
-//            toDelete.forEach {
-//                InstanceTable.deleteWhere { InstanceTable.instanceId eq it }
-//            }
-//            toDelete.clear()
-//            val gcpStored = selectAllGcpInstances()
-//            gcpStored.forEach { ins ->
-//                gcpInstances.forEach {
-//                    if (it.instanceId == ins.instanceId) {
-//                        toDelete.add(it.instanceId)
-//                    }
-//                }
-//            }
-//            toDelete.forEach {
-//                InstanceTable.deleteWhere { InstanceTable.instanceId eq it }
-//            }
 
             instances.forEach { instance ->
                 // Insert into DB if not already exists

@@ -10,6 +10,7 @@ import com.google.api.services.compute.model.InstancesScopedList
 import policymig.db.Instance
 import policymig.db.instance
 import policymig.util.AWS_REGIONS
+import policymig.util.misc.APP_NAME
 import policymig.util.misc.logError
 import policymig.util.misc.logWarning
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
@@ -48,7 +49,7 @@ fun createComputeService(credentialsFile: String): Compute {
         JacksonFactory.getDefaultInstance(),
         credentials
     )
-        .setApplicationName("PolicyMig")
+        .setApplicationName(APP_NAME)
         .build()
 }
 
@@ -197,6 +198,13 @@ fun fetchEc2Instances(): List<Instance> {
     }
     return instances
 }
+
+/*
+    TODO: Attach security groups to instances API
+    @author: aayush
+    @date: 03/11/19
+    @time: 1:25 PM
+ */
 
 fun fetchSecurityGroupIds(): List<String> {
     val profileCredentials: DefaultCredentialsProvider = DefaultCredentialsProvider.create()

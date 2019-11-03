@@ -36,12 +36,10 @@ object PrivateIpTable: Table("private_ips") {
 /**
  * SQL table to store VM tags
  *
- * @property id Unique id for each tag
  * @property tag key=value pairs
  * @property instanceId foreign key to [policymig.db.InstanceTable.instanceId]
  */
 object TagsTable: Table("tags") {
-    val id: Column<Int> = integer("id").autoIncrement().primaryKey()
     val tag: Column<String> = varchar("tag", 30).check("tag") { it.regexp(TAG_REGEX.toString()) }
     val instanceId: Column<String> = reference("instance_id", InstanceTable.instanceId, onDelete = CASCADE)
 }
@@ -49,12 +47,10 @@ object TagsTable: Table("tags") {
 /**
  * SQL table to store VM network interface IDs
  *
- * @property id Unique id for each tag
  * @property nif unique id for each network interface card
  * @property instanceId foreign key to [policymig.db.InstanceTable.instanceId]
  */
 object NetworkInterfacesTable: Table("network_interfaces") {
-    val id: Column<Int> = integer("id").autoIncrement().primaryKey()
     val nif: Column<String> = varchar("nif", 30)
     val instanceId: Column<String> = reference("instance_id", InstanceTable.instanceId, onDelete = CASCADE)
 }

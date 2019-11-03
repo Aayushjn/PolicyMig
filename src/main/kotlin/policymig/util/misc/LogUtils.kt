@@ -7,12 +7,24 @@ import java.io.StringWriter
 import kotlin.system.exitProcess
 
 /**
+ * Logs to DEBUG level
+ *
+ * @param name name of logger
+ * @param msg msg to be logged
+ */
+inline fun logDebug(name: String = APP_NAME, msg: () -> Any) = with(LoggerFactory.getLogger(name)) {
+    if (isDebugEnabled) {
+        debug(msg().toString())
+    }
+}
+
+/**
  * Logs to INFO level
  *
  * @param name name of logger
  * @param msg msg to be logged
  */
-inline fun logInfo(name: String = "PolicyMig", msg: () -> Any) = LoggerFactory.getLogger(name).info(msg().toString())
+inline fun logInfo(name: String = APP_NAME, msg: () -> Any) = LoggerFactory.getLogger(name).info(msg().toString())
 
 /**
  * Logs to WARN level
@@ -20,7 +32,7 @@ inline fun logInfo(name: String = "PolicyMig", msg: () -> Any) = LoggerFactory.g
  * @param name name of logger
  * @param msg msg to be logged
  */
-inline fun logWarning(name: String = "PolicyMig", msg: () -> Any) = LoggerFactory.getLogger(name).warn(msg().toString())
+inline fun logWarning(name: String = APP_NAME, msg: () -> Any) = LoggerFactory.getLogger(name).warn(msg().toString())
 
 /**
  * Logs to ERROR level
@@ -28,7 +40,7 @@ inline fun logWarning(name: String = "PolicyMig", msg: () -> Any) = LoggerFactor
  * @param name name of logger
  * @param msg msg to be logged
  */
-inline fun logError(name: String = "PolicyMig", exitCode: Int = UNCAUGHT_EXCEPTION, msg: () -> Any) {
+inline fun logError(name: String = APP_NAME, exitCode: Int = UNCAUGHT_EXCEPTION, msg: () -> Any) {
     LoggerFactory.getLogger(name).error(msg().toString())
     exitProcess(exitCode)
 }

@@ -28,7 +28,7 @@ val jsonReader: Gson = GsonBuilder()
 /**
  * JSON serializer for [Pair] of [String] to [String]
  */
-class PairSerializer : JsonSerializer<Pair<String, String>> {
+class PairSerializer: JsonSerializer<Pair<String, String>> {
     override fun serialize(src: Pair<String, String>?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
         return JsonObject().apply {
             if (src != null) {
@@ -43,7 +43,7 @@ class PairSerializer : JsonSerializer<Pair<String, String>> {
 /**
  * JSON deserializer for [Pair] of [String] to [String]
  */
-class PairDeserializer : JsonDeserializer<Pair<String, String>> {
+class PairDeserializer: JsonDeserializer<Pair<String, String>> {
     override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): Pair<String, String> {
         return if (json != null) {
             val jsonObject = json.asJsonObject
@@ -58,7 +58,7 @@ class PairDeserializer : JsonDeserializer<Pair<String, String>> {
 /**
  * JSON deserializer for [policymig.model.Policy]
  */
-class PolicyDeserializer : JsonDeserializer<Policy> {
+class PolicyDeserializer: JsonDeserializer<Policy> {
     override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): Policy {
         requireNotNull(json)
 
@@ -83,7 +83,7 @@ class PolicyDeserializer : JsonDeserializer<Policy> {
 /**
  * JSON deserializer for [policymig.model.Rule]
  */
-class RuleDeserializer : JsonDeserializer<Rule> {
+class RuleDeserializer: JsonDeserializer<Rule> {
     override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): Rule {
         requireNotNull(json)
 

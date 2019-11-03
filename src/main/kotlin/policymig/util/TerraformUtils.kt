@@ -111,70 +111,64 @@ fun createGcpProviderBlock(project: String, credentialsFile: String) =
 fun createGcpFirewallBlock(policy: Policy) {
     require(policy.target == "gcp") { "Only GCP policies allowed!" }
 
-    with(Paths.get(DIRECTORY + File.separator + "gcp")) {
-        if (!Files.exists(this)) {
-            try {
-                Files.createDirectory(this)
-            } catch (e: IOException) {
-                logError(FILENAME, DISCOVERY_NOT_DONE) { "Perform discovery first!" }
-                return
+    val path = Paths.get(DIRECTORY + File.separator + "gcp")
+    if (!Files.exists(path)) {
+        Files.createDirectory(path)
+    }
+
+    var clonedBlock: MutableList<String>
+    policy.rules.forEachIndexed { i, rule ->
+        clonedBlock = ArrayList(GCP_FIREWALL_TEMPLATE).apply {
+            add(0, "resource \"google_compute_firewall\" \"firewall-${randomHexString()}")
+            add(2, policy.name + i)
+            add(4, policy.network)
+            add(6, policy.direction)
+            add(8, policy.description)
+            if (policy.sourceTags == null) {
+                if (policy.sourceIps == null) {
+                    removeAt(10)
+                } else {
+                    add(11, "[" +
+                            policy.sourceIps.joinToString { item -> "\"$item\"" } +
+                            "]")
+                }
+            } else {
+                val ips = DbUtils.fetchTagsAsIp(policy.target, policy.sourceTags)
+                add(11, "[" +
+                        ips.joinToString { item -> "\"$item\"" } +
+                        "]")
             }
+            if (policy.targetTags == null) {
+                if (policy.targetIps == null) {
+                    removeAt(12)
+                } else {
+                    add(11, "[" +
+                            policy.targetIps.joinToString { item -> "\"$item\"" } +
+                            "]")
+                }
+            } else {
+                val ips = DbUtils.fetchTagsAsIp(policy.target, policy.targetTags)
+                add(11, "[" +
+                        ips.joinToString { item -> "\"$item\"" } +
+                        "]")
+            }
+
+            val template: MutableList<String> = if (rule.action == "allow") {
+                ArrayList(ALLOW_TEMPLATE)
+            } else {
+                ArrayList(DENY_TEMPLATE)
+            }.apply {
+                add(1, rule.protocol)
+                add(3, "[" +
+                        rule.ports.joinToString { port -> "\"$port\"" } +
+                        "]")
+            }
+            add(size - 1, template.joinToString(""))
         }
 
-        var clonedBlock: MutableList<String>
-        policy.rules.forEachIndexed { i, rule ->
-            clonedBlock = ArrayList(GCP_FIREWALL_TEMPLATE).apply {
-                add(0, "resource \"google_compute_firewall\" \"firewall-${randomHexString()}")
-                add(2, policy.name + i)
-                add(4, policy.network)
-                add(6, policy.direction)
-                add(8, policy.description)
-                if (policy.sourceTags == null) {
-                    if (policy.sourceIps == null) {
-                        removeAt(10)
-                    } else {
-                        add(11, "[" +
-                                policy.sourceIps.joinToString { item -> "\"$item\"" } +
-                                "]")
-                    }
-                } else {
-                    val ips = DbUtils.fetchTagsAsIp(policy.target, policy.sourceTags)
-                    add(11, "[" +
-                            ips.joinToString { item -> "\"$item\"" } +
-                            "]")
-                }
-                if (policy.targetTags == null) {
-                    if (policy.targetIps == null) {
-                        removeAt(12)
-                    } else {
-                        add(11, "[" +
-                                policy.targetIps.joinToString { item -> "\"$item\"" } +
-                                "]")
-                    }
-                } else {
-                    val ips = DbUtils.fetchTagsAsIp(policy.target, policy.targetTags)
-                    add(11, "[" +
-                            ips.joinToString { item -> "\"$item\"" } +
-                            "]")
-                }
-
-                val template: MutableList<String> = if (rule.action == "allow") {
-                    ArrayList(ALLOW_TEMPLATE)
-                } else {
-                    ArrayList(DENY_TEMPLATE)
-                }.apply {
-                    add(1, rule.protocol)
-                    add(3, "[" +
-                            rule.ports.joinToString { port -> "\"$port\"" } +
-                            "]")
-                }
-                add(size - 1, template.joinToString(""))
-            }
-
-            with(File(this.toString(), "firewalls.tf")) {
-                clonedBlock.forEach {
-                    appendText(it)
-                }
+        with(File(path.toString(), "firewalls.tf")) {
+            clonedBlock.forEach {
+                appendText(it)
             }
         }
     }
@@ -191,92 +185,79 @@ fun createAwsSecurityGroupBlock(policy: Policy) {
 
     var template: MutableList<String>
 
-    with(Paths.get(DIRECTORY + File.separator + "aws")) {
-        if (!Files.exists(this)) {
-            try {
-                Files.createDirectory(this)
-            } catch (e: IOException) {
-                logError(FILENAME, DISCOVERY_NOT_DONE) { "Perform discovery first!" }
-                return
+    val outerPath = Paths.get(DIRECTORY + File.separator + "aws")
+    if (!Files.exists(outerPath)) {
+        Files.createDirectory(outerPath)
+    }
+
+    val innerPath = Paths.get(outerPath.toString() + File.separator + policy.region)
+    if (!Files.exists(innerPath)) {
+        Files.createDirectory(innerPath)
+    }
+
+    val providerBlock = ArrayList(AWS_PROVIDER_BLOCK).apply { add(1, policy.region) }
+
+    with(File(innerPath.toString(), "provider.tf")) {
+        writeText("")
+        providerBlock.forEach { line -> appendText(line) }
+    }
+
+    var clonedBlock: MutableList<String>
+    policy.rules.forEachIndexed { i, rule ->
+        clonedBlock = ArrayList(SECURITY_GROUP_BLOCK).apply {
+            add(0, "resource \"aws_security_group\" \"firewall-${randomHexString()}")
+            add(2, policy.name + i)
+            add(4, policy.description)
+
+            rule.ports.forEach { port ->
+                template = if (policy.direction.toUpperCase() == "INGRESS") {
+                    ArrayList(INGRESS_BLOCK)
+                } else {
+                    ArrayList(EGRESS_BLOCK)
+                }
+                if (port.split("-").size == 2) {
+                    template.apply {
+                        val (from, to) = port.split("-", limit = 2)
+                        add(1, from)
+                        add(3, to)
+                    }
+                } else {
+                    template.apply {
+                        add(1, port)
+                        add(3, port)
+                    }
+                }
+                template.apply {
+                    if (rule.protocol == "all") {
+                        add(5, "-1")
+                    } else {
+                        add(5, rule.protocol)
+                    }
+                    if (policy.sourceTags == null) {
+                        policy.sourceIps?.let { ip ->
+                            add(7, "[${ip.joinToString { item -> "\"$item\"" }}]")
+                        }
+                    } else {
+                        val ips = DbUtils.fetchTagsAsIp(policy.target, policy.sourceTags)
+                        add(7, "[${ips.joinToString { item -> "\"$item\"" }}]")
+                    }
+
+                    if (policy.targetTags == null) {
+                        policy.targetIps?.let { ip ->
+                            add(7, "[${ip.joinToString { item -> "\"$item\"" }}]")
+                        }
+                    } else {
+                        val ips = DbUtils.fetchTagsAsIp(policy.target, policy.targetTags)
+                        add(7, "[${ips.joinToString { item -> "\"$item\"" }}]")
+                    }
+                }
+                add(size - 1, template.joinToString(""))
             }
+            add(6, LocalDateTime.now().toString())
         }
 
-        with(Paths.get(this.toString() + File.separator + policy.region)) {
-            if (!Files.exists(this)) {
-                Files.createDirectory(this)
-            }
-
-            val providerBlock = ArrayList(AWS_PROVIDER_BLOCK).apply {
-                add(1, policy.region)
-            }
-
-            with (File(this.toString(), "provider.tf")) {
-                writeText("")
-                providerBlock.forEach {
-                    appendText(it.toString())
-                }
-            }
-
-            var clonedBlock: MutableList<String>
-            policy.rules.forEachIndexed { i, rule ->
-                clonedBlock = ArrayList(SECURITY_GROUP_BLOCK).apply {
-                    add(0, "resource \"aws_security_group\" \"firewall-${randomHexString()}")
-                    add(2, policy.name + i)
-                    add(4, policy.description)
-
-                    rule.ports.forEach { port ->
-                        template = if (policy.direction.toUpperCase() == "INGRESS") {
-                            ArrayList(INGRESS_BLOCK)
-                        } else {
-                            ArrayList(EGRESS_BLOCK)
-                        }
-                        if (port.split("-").size == 2) {
-                            template.apply {
-                                val (from, to) = port.split("-", limit = 2)
-                                add(1, from)
-                                add(3, to)
-                            }
-                        } else {
-                            template.apply {
-                                add(1, port)
-                                add(3, port)
-                            }
-                        }
-                        template.apply {
-                            if (rule.protocol == "all") {
-                                add(5, "-1")
-                            } else {
-                                add(5, rule.protocol)
-                            }
-                            if (policy.sourceTags == null) {
-                                policy.sourceIps?.let { ip ->
-                                    add(7, "[${ip.joinToString { item -> "\"$item\"" }}]")
-                                }
-                            } else {
-                                val ips = DbUtils.fetchTagsAsIp(policy.target, policy.sourceTags)
-                                add(7, "[${ips.joinToString { item -> "\"$item\"" }}]")
-                            }
-
-                            if (policy.targetTags == null) {
-                                policy.targetIps?.let { ip ->
-                                    add(7, "[${ip.joinToString { item -> "\"$item\"" }}]")
-                                }
-                            } else {
-                                val ips = DbUtils.fetchTagsAsIp(policy.target, policy.targetTags)
-                                add(7, "[${ips.joinToString { item -> "\"$item\"" }}]")
-                            }
-                        }
-                        add(size - 1, template.joinToString(""))
-                    }
-                    add(6, LocalDateTime.now().toString())
-                }
-
-                with(File(this.toString(), "firewalls.tf")) {
-                    clonedBlock.forEach {
-                        appendText(it)
-                    }
-                }
-            }
+        with(File(innerPath.toString(), "firewalls.tf")) {
+            clonedBlock.forEach { appendText(it) }
         }
     }
 }
@@ -289,19 +270,16 @@ fun terraformGcp() {
     logInfo(FILENAME) { initCommand.first }
     if (initCommand.second != "") {
         logError(FILENAME, COMMAND_FAILURE) { initCommand.second }
-        return
     }
     val planCommand = runCommand("terraform plan -out plan.out", "$DIRECTORY/gcp/")
     logInfo(FILENAME) { planCommand.first }
     if (planCommand.second != "") {
         logError(FILENAME, COMMAND_FAILURE) { planCommand.second }
-        return
     }
     val applyCommand = runCommand("terraform apply plan.out", "$DIRECTORY/gcp/", 180)
     logInfo(FILENAME) { applyCommand.first }
     if (applyCommand.second != "") {
         logError(FILENAME, COMMAND_FAILURE) { applyCommand.second }
-        return
     }
 }
 
@@ -320,19 +298,16 @@ fun terraformAws() {
             logInfo(FILENAME) { initCommand.first }
             if (initCommand.second != "") {
                 logError(FILENAME, COMMAND_FAILURE) { initCommand.second }
-                return
             }
             planCommand = runCommand("terraform plan -out plan.out", dir.toString())
             logInfo(FILENAME) { planCommand.first }
             if (planCommand.second != "") {
                 logError(FILENAME, COMMAND_FAILURE) { planCommand.second }
-                return
             }
             applyCommand = runCommand("terraform apply plan.out", dir.toString(), 180)
             logInfo(FILENAME) { applyCommand.first }
             if (applyCommand.second != "") {
                 logError(FILENAME, COMMAND_FAILURE) { applyCommand.second }
-                return
             }
         }
     }

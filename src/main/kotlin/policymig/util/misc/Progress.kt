@@ -19,7 +19,7 @@ private class ProgressBar(private val begin: String = "Processing", private val 
             print("\r$begin ${anim[x++ % anim.length]}")
             try {
                 sleep(100)
-            } catch (e: Exception) {}
+            } catch (e: Exception) { logDebug("Progress") { e.message.toString() } }
         }
         println("\r$end")
     }

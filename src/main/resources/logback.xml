@@ -6,7 +6,7 @@
         </encoder>
     </appender>
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>policymig.log</file>
+        <file>logs/policymig.log</file>
         <encoder>
             <pattern>%d{dd-MM-yyyy} %d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
             <charset>utf8</charset>

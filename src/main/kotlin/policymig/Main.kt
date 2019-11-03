@@ -74,6 +74,10 @@ class Apply: CliktCommand(
     private val project: String? by option("-p", "--project", help = "name of project (unique id on GCP)")
 
     override fun run() {
+        if (!Files.exists(Paths.get(DIRECTORY))) {
+            logError(exitCode = DISCOVERY_NOT_DONE) { "Perform discovery first!" }
+        }
+
         val policies = readFromFile(file.toString())
         when(policies.cloudTargetCount()) {
             1 -> if (policies[0].target == "gcp") {
@@ -82,14 +86,14 @@ class Apply: CliktCommand(
                 createGcpProviderBlock(project!!, credentialsFile.toString())
                 policies.forEach { policy -> createGcpFirewallBlock(policy) }
 
-                showLoading("Applying policies on GCP", "Policy application complete") { terraformGcp() }
+                showLoading("Applying policies on GCP", APPLY_COMPLETE) { terraformGcp() }
             } else {
                 if (project != null || credentialsFile != null) {
                     logWarning { "Project and/or credentials file are not required for AWS" }
                 }
 
                 policies.forEach { policy -> createAwsSecurityGroupBlock(policy) }
-                showLoading("Applying policies on AWS", "Policy application complete") { terraformAws() }
+                showLoading("Applying policies on AWS", APPLY_COMPLETE) { terraformAws() }
             }
             2 -> {
                 requireNotNull(project)
@@ -102,8 +106,8 @@ class Apply: CliktCommand(
                         createAwsSecurityGroupBlock(policy)
                     }
                 }
-                showLoading("Applying policies on GCP", "Policy application complete") { terraformGcp() }
-                showLoading("Applying policies on AWS", "Policy application complete") { terraformAws() }
+                showLoading("Applying policies on GCP", APPLY_COMPLETE) { terraformGcp() }
+                showLoading("Applying policies on AWS", APPLY_COMPLETE) { terraformAws() }
             }
         }
     }
@@ -278,13 +282,3 @@ class Clean: CliktCommand(
 fun main(args: Array<String>) = PolicyMigrate()
     .subcommands(Apply(), Translate(), Discover(), Clean())
     .main(args)
-
-//fun main() {
-//    val policy = getSamplePolicy("aws", "INGRESS")
-//
-//    createAwsSecurityGroupBlock(policy)
-//
-//    println(runCommand("terraform init", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/"))
-//    println(runCommand("terraform plan -out plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/"))
-//    println(runCommand("terraform apply plan.out", "/home/aayush/IdeaProjects/PolicyMig/terraform-resources/aws/us-west-2/", 180))
-//}

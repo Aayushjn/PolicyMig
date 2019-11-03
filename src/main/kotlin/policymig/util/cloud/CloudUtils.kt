@@ -10,6 +10,7 @@ import com.google.api.services.compute.model.InstancesScopedList
 import policymig.db.Instance
 import policymig.db.instance
 import policymig.util.AWS_REGIONS
+import policymig.util.misc.logError
 import policymig.util.misc.logWarning
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.core.exception.SdkClientException
@@ -22,6 +23,8 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.security.GeneralSecurityException
 import java.time.LocalDateTime
+
+const val FILENAME = "CloudUtils"
 
 /**
  * Creates a [com.google.api.services.compute.Compute] instance from given credentials
@@ -114,7 +117,7 @@ fun fetchInstancesFromGcp(project: String, computeService: Compute): List<Instan
  *   <li>Java System Properties - <code>aws.accessKeyId</code> and <code>aws.secretKey</code></li>
  *   <li>Environment Variables - <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code></li>
  *   <li>Credential profiles file at the default location (~/.aws/credentials) shared by all AWS SDKs and the AWS CLI</li>
- *   <li>Credentials delivered through the Amazon EC2 container service if AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" environment
+ *   <li>Credentials delivered through the Amazon EC2 container service if "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" environment
  *   variable is set and security manager has permission to access the variable,</li>
  *   <li>Instance profile credentials delivered through the Amazon EC2 metadata service</li>
  * </ol>
@@ -175,10 +178,21 @@ fun fetchEc2Instances(): List<Instance> {
             } while (nextToken != null)
         } catch (e: Ec2Exception) {
             // Occurs if a region that has not been enabled is accessed (gov, cn, etc)
-            logWarning("CloudUtils") { "$awsRegion: ${e.message}" }
+            logWarning(FILENAME) { "$awsRegion: ${e.message}" }
         } catch (e: SdkClientException) {
-            // Normally occurs when accessing global regions
-            logWarning("CloudUtils") { "$awsRegion: ${e.message}" }
+            // Normally occurs when accessing global regions and during SDK client configuration
+            if (e.message!!.contains("Unable to load credentials")) {
+                logError(FILENAME) {
+                    "Credentials must be provided in either of the following locations:\n" +
+                            "• Java System Properties - aws.accessKeyId and aws.secretKey\n" +
+                            "• Environment Variables - AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY\n" +
+                            "• Credential profiles file at the default location (~/.aws/credentials) shared by all AWS SDKs and the AWS CLI\n" +
+                            "• Credentials delivered through the Amazon EC2 container service if \"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI\" environment\n" +
+                            "• variable is set and security manager has permission to access the variable\n" +
+                            "• Instance profile credentials delivered through the Amazon EC2 metadata service"
+                }
+            }
+            logWarning(FILENAME) { "$awsRegion: ${e.message}" }
         }
     }
     return instances
@@ -221,10 +235,10 @@ fun fetchSecurityGroupIds(): List<String> {
             } while (nextToken != null)
         } catch (e: Ec2Exception) {
             // Occurs if a region that has not been enabled is accessed (gov, cn, etc)
-            logWarning("CloudUtils") { "$awsRegion: ${e.message}" }
+            logWarning(FILENAME) { "$awsRegion: ${e.message}" }
         } catch (e: SdkClientException) {
             // Normally occurs when accessing global regions
-            logWarning("CloudUtils") { "$awsRegion: ${e.message}" }
+            logWarning(FILENAME) { "$awsRegion: ${e.message}" }
         }
     }
     return securityGroupIds

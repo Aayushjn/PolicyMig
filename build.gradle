@@ -31,9 +31,9 @@ dependencies {
     implementation 'ch.qos.logback:logback-classic:1.2.3'
 
     // Exposed persistence layer
-    implementation 'org.jetbrains.exposed:exposed:0.17.4'
+    implementation 'org.jetbrains.exposed:exposed:0.17.6'
     // MySQL JDBC driver
-    implementation 'mysql:mysql-connector-java:8.0.17'
+    implementation 'mysql:mysql-connector-java:8.0.18'
 
     // Google Cloud APIs
     implementation 'com.google.apis:google-api-services-compute:v1-rev214-1.25.0'

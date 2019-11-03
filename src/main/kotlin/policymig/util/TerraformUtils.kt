@@ -3,6 +3,8 @@ package policymig.util
 
 import policymig.model.Policy
 import policymig.util.db.DbUtils
+import policymig.util.misc.COMMAND_FAILURE
+import policymig.util.misc.DISCOVERY_NOT_DONE
 import policymig.util.misc.logError
 import policymig.util.misc.logInfo
 import java.io.File
@@ -11,6 +13,8 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
+
+private const val FILENAME = "TerraformUtils"
 
 const val DIRECTORY: String = "terraform-resources"
 const val GCP_PROVIDER_VERSION: String = "2.15.0"
@@ -112,7 +116,7 @@ fun createGcpFirewallBlock(policy: Policy) {
             try {
                 Files.createDirectory(this)
             } catch (e: IOException) {
-                logError { "Perform discovery first!" }
+                logError(FILENAME, DISCOVERY_NOT_DONE) { "Perform discovery first!" }
                 return
             }
         }
@@ -192,7 +196,7 @@ fun createAwsSecurityGroupBlock(policy: Policy) {
             try {
                 Files.createDirectory(this)
             } catch (e: IOException) {
-                logError { "Perform discovery first!" }
+                logError(FILENAME, DISCOVERY_NOT_DONE) { "Perform discovery first!" }
                 return
             }
         }
@@ -282,21 +286,21 @@ fun createAwsSecurityGroupBlock(policy: Policy) {
  */
 fun terraformGcp() {
     val initCommand = runCommand("terraform init", "$DIRECTORY/gcp/")
-    logInfo { initCommand.first }
+    logInfo(FILENAME) { initCommand.first }
     if (initCommand.second != "") {
-        logError { initCommand.second }
+        logError(FILENAME, COMMAND_FAILURE) { initCommand.second }
         return
     }
     val planCommand = runCommand("terraform plan -out plan.out", "$DIRECTORY/gcp/")
-    logInfo { planCommand.first }
+    logInfo(FILENAME) { planCommand.first }
     if (planCommand.second != "") {
-        logError { planCommand.second }
+        logError(FILENAME, COMMAND_FAILURE) { planCommand.second }
         return
     }
     val applyCommand = runCommand("terraform apply plan.out", "$DIRECTORY/gcp/", 180)
-    logInfo { applyCommand.first }
+    logInfo(FILENAME) { applyCommand.first }
     if (applyCommand.second != "") {
-        logError { applyCommand.second }
+        logError(FILENAME, COMMAND_FAILURE) { applyCommand.second }
         return
     }
 }
@@ -313,21 +317,21 @@ fun terraformAws() {
         file.listFiles { pathname -> pathname.isDirectory }?.forEach { dir ->
             logInfo { "Performing Terraform commands in $dir" }
             initCommand = runCommand("terraform init", dir.toString())
-            logInfo { initCommand.first }
+            logInfo(FILENAME) { initCommand.first }
             if (initCommand.second != "") {
-                logError { initCommand.second }
+                logError(FILENAME, COMMAND_FAILURE) { initCommand.second }
                 return
             }
             planCommand = runCommand("terraform plan -out plan.out", dir.toString())
-            logInfo { planCommand.first }
+            logInfo(FILENAME) { planCommand.first }
             if (planCommand.second != "") {
-                logError { planCommand.second }
+                logError(FILENAME, COMMAND_FAILURE) { planCommand.second }
                 return
             }
             applyCommand = runCommand("terraform apply plan.out", dir.toString(), 180)
-            logInfo { applyCommand.first }
+            logInfo(FILENAME) { applyCommand.first }
             if (applyCommand.second != "") {
-                logError { applyCommand.second }
+                logError(FILENAME, COMMAND_FAILURE) { applyCommand.second }
                 return
             }
         }
@@ -343,7 +347,7 @@ fun terraformAws() {
  * @return Returns a pair of the command's outputs to [System.out] and [System.err]
  */
 internal fun runCommand(command: String, workingDirectory: String = System.getenv("HOME"), timeout: Long = 60): Pair<String, String> {
-    logInfo { "Running command: $command" }
+    logInfo(FILENAME) { "Running command: $command" }
     val process = ProcessBuilder(listOf("/bin/sh", "-c", *command.split("\\s").toTypedArray()))
         .directory(File(workingDirectory))
         .redirectOutput(ProcessBuilder.Redirect.PIPE)

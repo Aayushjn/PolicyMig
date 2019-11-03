@@ -263,7 +263,7 @@ class Clean: CliktCommand(
                     destroyCommand = runCommand("terraform destroy -auto-approve", workingDirectory = dir.toString(), timeout = 180)
                     logInfo { destroyCommand.first.trim() }
                     if (destroyCommand.second != "") {
-                        logError { destroyCommand.second }
+                        logError(exitCode = COMMAND_FAILURE) { destroyCommand.second }
                         return
                     }
                 }

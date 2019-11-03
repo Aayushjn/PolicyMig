@@ -10,6 +10,8 @@ internal const val DB_USER: String = "root"
 internal const val DB_PASS: String = "root"
 internal const val DB_DRIVER: String = "com.mysql.cj.jdbc.Driver"
 
+const val FILENAME = "DbUtils"
+
 /**
  * Exposes methods to access database and perform SQL queries
  */
@@ -26,7 +28,7 @@ object DbUtils {
      * @param instances list of [policymig.db.Instance]
      */
     fun insertIntoTable(instances: List<Instance>) {
-        logInfo("DbUtils") { "Opening connection to ${db.url} for insert/update" }
+        logInfo(FILENAME) { "Opening connection to ${db.url} for insert/update" }
 
         transaction {
             addLogger(Slf4jSqlDebugLogger)
@@ -153,7 +155,7 @@ object DbUtils {
      * @return list of [policymig.db.Instance]
      */
     private fun selectAllGcpInstances(): List<Instance> {
-        logInfo("DbUtils") { "Opening connection to ${db.url} to fetch GCP instances" }
+        logInfo(FILENAME) { "Opening connection to ${db.url} to fetch GCP instances" }
 
         val instances: MutableList<Instance> = mutableListOf()
         val nifIds: MutableList<String> = mutableListOf()
@@ -199,7 +201,7 @@ object DbUtils {
      * @return list of [policymig.db.Instance]
      */
     private fun selectAllAwsInstances(): List<Instance> {
-        logInfo("DbUtils") { "Opening connection to ${db.url} to fetch AWS instances" }
+        logInfo(FILENAME) { "Opening connection to ${db.url} to fetch AWS instances" }
 
         val instances: MutableList<Instance> = mutableListOf()
         val nifIds: MutableList<String> = mutableListOf()
@@ -243,7 +245,7 @@ object DbUtils {
      * Drops all tables utilized by the app
      */
     fun dropAllTables() {
-        logInfo("DbUtils") { "Opening connection to ${db.url} to drop all tables" }
+        logInfo(FILENAME) { "Opening connection to ${db.url} to drop all tables" }
 
         transaction {
             addLogger(Slf4jSqlDebugLogger)

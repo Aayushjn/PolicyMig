@@ -4,6 +4,7 @@ package policymig.util.misc
 import org.slf4j.LoggerFactory
 import java.io.PrintWriter
 import java.io.StringWriter
+import kotlin.system.exitProcess
 
 /**
  * Logs to INFO level
@@ -27,7 +28,10 @@ inline fun logWarning(name: String = "PolicyMig", msg: () -> Any) = LoggerFactor
  * @param name name of logger
  * @param msg msg to be logged
  */
-inline fun logError(name: String = "PolicyMig", msg: () -> Any) = LoggerFactory.getLogger(name).error(msg().toString())
+inline fun logError(name: String = "PolicyMig", exitCode: Int = UNCAUGHT_EXCEPTION, msg: () -> Any) {
+    LoggerFactory.getLogger(name).error(msg().toString())
+    exitProcess(exitCode)
+}
 
 /**
  * Extension function to get stacktrace as string

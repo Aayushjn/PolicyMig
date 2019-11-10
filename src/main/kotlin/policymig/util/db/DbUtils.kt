@@ -6,8 +6,8 @@ import policymig.db.*
 import policymig.util.misc.logInfo
 
 internal const val DB_NAME: String = "policy_mig"
-internal const val DB_USER: String = "root"
-internal const val DB_PASS: String = "root"
+internal const val DB_USER: String = ""
+internal const val DB_PASS: String = ""
 internal const val DB_DRIVER: String = "com.mysql.cj.jdbc.Driver"
 
 const val FILENAME = "DbUtils"

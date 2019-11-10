@@ -29,7 +29,7 @@ object InstanceTable: Table("instances") {
  * @property instanceId foreign key to [policymig.db.InstanceTable.instanceId]
  */
 object PrivateIpTable: Table("private_ips") {
-    val ip: Column<String> = varchar("ip", 19).primaryKey().check("IP") { it.regexp(IP_REGEX.toString()) }
+    val ip: Column<String> = varchar("ip", 19).check("IP") { it.regexp(IP_REGEX.toString()) }
     val instanceId: Column<String> = reference("instance_id", InstanceTable.instanceId, onDelete = CASCADE)
 }
 

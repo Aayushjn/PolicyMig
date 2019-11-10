@@ -46,7 +46,6 @@ internal fun getSamplePolicy(_target: String, _direction: String): Policy {
             target = _target
             region = _region
             network = _network
-            sourceIps = listOf("192.168.2.0/16", "10.53.25.192/24")
             sourceTags = listOf("app" to "App", "name" to "Name")
             rules {
                 rule {
@@ -57,7 +56,7 @@ internal fun getSamplePolicy(_target: String, _direction: String): Policy {
                 rule {
                     ports = listOf("0")
                     action = "allow"
-                    protocol = "all"
+                    protocol = "udp"
                 }
             }
         }
@@ -69,7 +68,6 @@ internal fun getSamplePolicy(_target: String, _direction: String): Policy {
             target = _target
             region = _region
             network = _network
-            targetIps = listOf("192.168.2.0/16", "10.53.25.192/24")
             targetTags = listOf("app" to "App", "name" to "Name")
             rules {
                 rule {
@@ -80,7 +78,7 @@ internal fun getSamplePolicy(_target: String, _direction: String): Policy {
                 rule {
                     ports = listOf("0")
                     action = "allow"
-                    protocol = "all"
+                    protocol = "udp"
                 }
             }
         }

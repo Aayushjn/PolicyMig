@@ -13,10 +13,8 @@ import java.io.File
 const val fileName = "test_policy"
 
 class DslTest {
-
     companion object {
-        @BeforeAll @JvmStatic
-        fun clearTestFile() = File("policies/$fileName$FILE_EXTENSION").writeText("")
+        @BeforeAll @JvmStatic fun clearTestFile() = File("policies/$fileName$FILE_EXTENSION").writeText("")
     }
 
     @Test

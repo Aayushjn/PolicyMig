@@ -1,12 +1,11 @@
 @file:JvmName("FileUtils")
 package policymig.util.io
 
-import com.google.gson.reflect.TypeToken
+import kotlinx.serialization.list
 import policymig.model.Policy
 import policymig.util.FILE_ERROR
 import policymig.util.FILE_EXTENSION
-import policymig.util.misc.jsonReader
-import policymig.util.misc.jsonWriter
+import policymig.util.misc.JSON
 import java.io.*
 
 /**
@@ -20,7 +19,7 @@ fun List<Policy>.writeToFile(filename: String) {
     val policies = readFromFile(filename)
     policies.addAll(this)
 
-    BufferedWriter(FileWriter(filename)).use { jsonWriter.toJson(policies, it) }
+    BufferedWriter(FileWriter(filename)).use { it.write(JSON.stringify(Policy.serializer().list, policies)) }
 }
 
 /**
@@ -37,5 +36,7 @@ fun readFromFile(filename: String): MutableList<Policy> {
         return mutableListOf()
     }
 
-    return BufferedReader(FileReader(filename)).use { jsonReader.fromJson(it, object : TypeToken<MutableList<Policy>>() {}.type) }
+    return BufferedReader(FileReader(filename)).use {
+        JSON.parse(Policy.serializer().list, it.readText()).toMutableList()
+    }
 }

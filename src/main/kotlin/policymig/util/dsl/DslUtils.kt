@@ -43,7 +43,9 @@ class RuleBuilder {
 
 @PolicyDsl
 class RULES: ArrayList<Rule>() {
-    fun rule(block: @PolicyDsl RuleBuilder.() -> Unit) = add(RuleBuilder().apply(block).build())
+    fun rule(block: @PolicyDsl RuleBuilder.() -> Unit) {
+        add(RuleBuilder().apply(block).build())
+    }
 }
 
 fun policy(block: @PolicyDsl PolicyBuilder.() -> Unit): Policy = PolicyBuilder().apply(block).build()

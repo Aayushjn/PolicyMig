@@ -4,11 +4,9 @@ package policymig.util
 import policymig.model.Policy
 import policymig.util.db.DbUtils
 import policymig.util.misc.COMMAND_FAILURE
-import policymig.util.misc.DISCOVERY_NOT_DONE
 import policymig.util.misc.logError
 import policymig.util.misc.logInfo
 import java.io.File
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.time.LocalDateTime

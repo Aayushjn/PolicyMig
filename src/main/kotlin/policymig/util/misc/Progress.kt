@@ -9,7 +9,7 @@ package policymig.util.misc
  * @property anim progress characters
  * @property showProgress flag to stop the loading animation
  */
-private class ProgressBar(private val begin: String = "Processing", private val end: String = "Done"): Thread() {
+internal class ProgressBar(private val begin: String = "Processing", private val end: String = "Done"): Thread() {
     private val anim = "|/-\\"
     internal var showProgress = true
 
@@ -19,7 +19,9 @@ private class ProgressBar(private val begin: String = "Processing", private val 
             print("\r$begin ${anim[x++ % anim.length]}")
             try {
                 sleep(100)
-            } catch (e: Exception) { logDebug("Progress") { e.message.toString() } }
+            } catch (e: InterruptedException) {
+                logDebug("Progress") { e.message.toString() }
+            }
         }
         println("\r$end")
     }
@@ -34,7 +36,7 @@ private class ProgressBar(private val begin: String = "Processing", private val 
  *
  * @return returns the return value of [function]
  */
-internal fun <T> showLoading(begin: String, end: String, function: () -> T): T =
+internal inline fun <reified T> showLoading(begin: String, end: String, function: () -> T): T =
     ProgressBar(begin, end).let {
         it.start()
         val returnValue = function()

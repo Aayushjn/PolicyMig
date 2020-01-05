@@ -1,6 +1,6 @@
 package policymig.model
 
-import com.google.gson.annotations.Expose
+import kotlinx.serialization.Serializable
 import policymig.util.*
 
 /**
@@ -21,17 +21,18 @@ import policymig.util.*
  * @property targetTags list of target key-value pairs
  * @property rules list of firewall rules to be enforced
  */
-data class Policy(@Expose val name: String,
-                  @Expose val description: String = "",
-                  @Expose var target: String,
-                  @Expose var direction: String = "INGRESS",
-                  @Expose var network: String?,
-                  @Expose var region: String?,
-                  @Expose val sourceIps: List<String>?,
-                  @Expose val sourceTags: List<Pair<String, String>>?,
-                  @Expose val targetIps: List<String>?,
-                  @Expose val targetTags: List<Pair<String, String>>?,
-                  @Expose val rules: List<Rule>) {
+@Serializable
+data class Policy(val name: String,
+                  val description: String = "",
+                  var target: String,
+                  var direction: String = "INGRESS",
+                  var network: String?,
+                  var region: String?,
+                  val sourceIps: List<String>?,
+                  val sourceTags: List<Pair<String, String>>?,
+                  val targetIps: List<String>?,
+                  val targetTags: List<Pair<String, String>>?,
+                  val rules: List<Rule>) {
     init {
         validate()
     }
@@ -133,9 +134,10 @@ data class Policy(@Expose val name: String,
  * @property ports list of ports to target
  * @property action specifies allowing or denying traffic from given rule (must be one of [policymig.util.ACTIONS]
  */
-data class Rule(@Expose val ports: List<String>,
-                @Expose val action: String = "allow",
-                @Expose val protocol: String = "tcp") {
+@Serializable
+data class Rule(val ports: List<String>,
+                val action: String = "allow",
+                val protocol: String = "tcp") {
     init {
         validate()
     }
